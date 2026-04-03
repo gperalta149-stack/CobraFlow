@@ -1,0 +1,84 @@
+### Test API
+GET http://localhost:3000
+
+### Crear Admin
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "nombre": "Administrador",
+  "email": "admin@cobraflow.com",
+  "password": "Admin2026*"
+}
+
+### Login Admin
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@cobraflow.com",
+  "password": "Admin2026*"
+}
+
+### Register Usuario Test
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "nombre": "Usuario Test",
+  "email": "test@cobraflow.com",
+  "password": "Test2026*"
+}
+
+
+### Crear Cliente
+POST http://localhost:3000/api/clientes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTc5ODg4LCJleHAiOjE3NzUyMDg2ODh9.MLl2j5HjBe0HgbJwfb0rDfMIJDegHZwjcWoeGhN9N58
+
+{
+  "nombre": "Juan Pérez",
+  "email": "juan@empresa.com",
+  "telefono": "3511234567",
+  "direccion": "Av. Colón 123, Córdoba"
+}
+
+### Listar Clientes
+GET http://localhost:3000/api/clientes
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTc5ODg4LCJleHAiOjE3NzUyMDg2ODh9.MLl2j5HjBe0HgbJwfb0rDfMIJDegHZwjcWoeGhN9N58
+
+### Crear Deuda
+POST http://localhost:3000/api/deudas
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTgwODU0LCJleHAiOjE3NzUyMDk2NTR9.ew4e5u6lZpH1zj8jUe91dl8XW6uyi0S2h8mLAAWWQOM
+
+{
+  "cliente_id": "4cbe3950-fd1c-439e-bb9b-5927931e3313",
+  "descripcion": "Factura 001 - Servicios de consultoría",
+  "monto_total": 15000,
+  "fecha_vencimiento": "2026-05-01"
+}
+
+### Listar Deudas
+GET http://localhost:3000/api/deudas
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTgwNjg3LCJleHAiOjE3NzUyMDk0ODd9.-efN4bLYMqrItRGw7DTFJxP4D9SrMyZpAeGuHBbH0N0
+
+
+### Crear Pago
+POST http://localhost:3000/api/pagos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTgxODk4LCJleHAiOjE3NzUyMTA2OTh9.7bzoZXF8CuTTlkF7oi7WqddYF7EMiSdWpCDYXfPyxjw
+
+{
+  "deuda_id": "f7876043-b868-4c44-a2b2-23baa8e5fa0e",
+  "monto": 5000,
+  "observaciones": "Pago parcial cuota 1"
+}
+
+### Listar Pagos
+GET http://localhost:3000/api/pagos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTgxODk4LCJleHAiOjE3NzUyMTA2OTh9.7bzoZXF8CuTTlkF7oi7WqddYF7EMiSdWpCDYXfPyxjw
+
+### Dashboard
+GET http://localhost:3000/api/dashboard
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEwMjA1YjkwLTY2NWQtNGZiMC1hZjljLTY1MDgwN2MyMzU5MSIsImVtYWlsIjoiYWRtaW5AY29icmFmbG93LmNvbSIsInJvbCI6ImFkbWluIiwiaWF0IjoxNzc1MTgxODk4LCJleHAiOjE3NzUyMTA2OTh9.7bzoZXF8CuTTlkF7oi7WqddYF7EMiSdWpCDYXfPyxjw
