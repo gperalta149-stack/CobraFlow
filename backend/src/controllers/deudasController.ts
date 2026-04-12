@@ -2,7 +2,16 @@ import { Request, Response } from 'express'
 import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
 
+// Llama a la función de Supabase que marca como vencidas
+// las deudas cuya fecha_vencimiento ya pasó (RN-08)
+const actualizarVencidas = async () => {
+  await supabase.rpc('actualizar_deudas_vencidas')
+}
+
 export const getDeudas = async (req: AuthRequest, res: Response) => {
+  // Actualiza estados antes de devolver resultados
+  await actualizarVencidas()
+
   const { estado, cliente_id } = req.query
 
   let query = supabase
@@ -61,7 +70,13 @@ export const updateDeuda = async (req: AuthRequest, res: Response) => {
 
   const { data, error } = await supabase
     .from('deudas')
-    .update({ descripcion, monto_total, fecha_vencimiento, estado, updated_at: new Date() })
+    .update({
+      descripcion,
+      monto_total,
+      fecha_vencimiento,
+      estado,
+      updated_at: new Date()
+    })
     .eq('id', id)
     .select()
 
@@ -72,13 +87,16 @@ export const updateDeuda = async (req: AuthRequest, res: Response) => {
 export const deleteDeuda = async (req: AuthRequest, res: Response) => {
   const { id } = req.params
 
+  // Verifica RN-02: no eliminar deuda con pagos registrados
   const { data: pagos } = await supabase
     .from('pagos')
     .select('id')
     .eq('deuda_id', id)
 
   if (pagos && pagos.length > 0) {
-    return res.status(400).json({ error: 'No se puede eliminar una deuda con pagos registrados' })
+    return res.status(400).json({
+      error: 'No se puede eliminar una deuda con pagos registrados'
+    })
   }
 
   const { error } = await supabase
