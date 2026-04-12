@@ -65,9 +65,23 @@ export const updateCliente = async (req: AuthRequest, res: Response) => {
 export const deleteCliente = async (req: AuthRequest, res: Response) => {
   const { id } = req.params
 
+  // Verifica RN-09: no desactivar cliente con deudas pendientes o parciales
+  const { data: deudasActivas } = await supabase
+    .from('deudas')
+    .select('id')
+    .eq('cliente_id', id)
+    .in('estado', ['pendiente', 'parcial'])
+
+  if (deudasActivas && deudasActivas.length > 0) {
+    return res.status(400).json({
+      error: `No se puede desactivar el cliente porque tiene ${deudasActivas.length} deuda/s pendiente/s o parcial/es`
+    })
+  }
+
+  // Soft delete: marca como inactivo sin eliminar el registro
   const { error } = await supabase
     .from('clientes')
-    .update({ activo: false })
+    .update({ activo: false, updated_at: new Date() })
     .eq('id', id)
 
   if (error) return res.status(400).json({ error: error.message })
