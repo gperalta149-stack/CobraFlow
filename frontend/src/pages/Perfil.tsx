@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Navbar from '../components/Navbar'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
+import { handleApiError } from '../utils/handleApiError'
 
 export default function Perfil() {
   const { usuario, login, token } = useAuth()
@@ -28,11 +29,14 @@ export default function Perfil() {
     setErrorPerfil('')
     setExitoPerfil('')
     try {
-      const { data } = await api.put(`/auth/perfil`, formPerfil)
-      login(token!, { ...usuario!, ...formPerfil })
+      await api.put('/auth/perfil', formPerfil)
+      
+      if (token && usuario) {
+        login(token, { ...usuario, ...formPerfil })
+      }
       setExitoPerfil('Perfil actualizado correctamente')
-    } catch (err: any) {
-      setErrorPerfil(err.response?.data?.error || 'Error al actualizar perfil')
+    } catch (err) {
+      setErrorPerfil(handleApiError(err, 'Error al actualizar perfil'))
     }
   }
 
@@ -56,8 +60,8 @@ export default function Perfil() {
       })
       setFormPassword({ passwordActual: '', passwordNuevo: '', confirmar: '' })
       setExitoPassword('Contraseña cambiada correctamente')
-    } catch (err: any) {
-      setErrorPassword(err.response?.data?.error || 'Error al cambiar contraseña')
+    } catch (err) {
+      setErrorPassword(handleApiError(err, 'Error al cambiar contraseña'))
     }
   }
 
@@ -71,13 +75,21 @@ export default function Perfil() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setTab('perfil')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'perfil' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              tab === 'perfil' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
           >
             Datos personales
           </button>
           <button
             onClick={() => setTab('password')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'password' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              tab === 'password' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
           >
             Cambiar contraseña
           </button>
@@ -87,11 +99,21 @@ export default function Perfil() {
         {tab === 'perfil' && (
           <div className="bg-white rounded-xl p-6 shadow">
             <h2 className="font-bold text-gray-700 mb-4">Datos personales</h2>
-            {errorPerfil && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{errorPerfil}</div>}
-            {exitoPerfil && <div className="bg-green-100 text-green-600 p-3 rounded mb-4">{exitoPerfil}</div>}
+            {errorPerfil && (
+              <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
+                {errorPerfil}
+              </div>
+            )}
+            {exitoPerfil && (
+              <div className="bg-green-100 text-green-600 p-3 rounded mb-4">
+                {exitoPerfil}
+              </div>
+            )}
             <form onSubmit={handleGuardarPerfil} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre
+                </label>
                 <input
                   value={formPerfil.nombre}
                   onChange={(e) => setFormPerfil({ ...formPerfil, nombre: e.target.value })}
@@ -100,7 +122,9 @@ export default function Perfil() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={formPerfil.email}
@@ -114,7 +138,7 @@ export default function Perfil() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Guardar cambios
               </button>
@@ -126,11 +150,21 @@ export default function Perfil() {
         {tab === 'password' && (
           <div className="bg-white rounded-xl p-6 shadow">
             <h2 className="font-bold text-gray-700 mb-4">Cambiar contraseña</h2>
-            {errorPassword && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{errorPassword}</div>}
-            {exitoPassword && <div className="bg-green-100 text-green-600 p-3 rounded mb-4">{exitoPassword}</div>}
+            {errorPassword && (
+              <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
+                {errorPassword}
+              </div>
+            )}
+            {exitoPassword && (
+              <div className="bg-green-100 text-green-600 p-3 rounded mb-4">
+                {exitoPassword}
+              </div>
+            )}
             <form onSubmit={handleCambiarPassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contraseña actual
+                </label>
                 <input
                   type="password"
                   value={formPassword.passwordActual}
@@ -140,7 +174,9 @@ export default function Perfil() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nueva contraseña
+                </label>
                 <input
                   type="password"
                   value={formPassword.passwordNuevo}
@@ -150,7 +186,9 @@ export default function Perfil() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirmar nueva contraseña
+                </label>
                 <input
                   type="password"
                   value={formPassword.confirmar}
@@ -161,7 +199,7 @@ export default function Perfil() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Cambiar contraseña
               </button>
