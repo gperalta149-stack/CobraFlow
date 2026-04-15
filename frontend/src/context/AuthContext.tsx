@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 
 interface Usuario {
   id: string
@@ -10,26 +11,39 @@ interface Usuario {
 interface AuthContextType {
   usuario: Usuario | null
   token: string | null
+  loading: boolean
   login: (token: string, usuario: Usuario) => void
   logout: () => void
   isAdmin: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType)
+const AuthContext = createContext<AuthContextType | null>(null)
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
+  // 🔹 Cargar sesión al iniciar
   useEffect(() => {
-    const storedToken = localStorage.getItem('token')
-    const storedUsuario = localStorage.getItem('usuario')
-    if (storedToken && storedUsuario) {
-      setToken(storedToken)
-      setUsuario(JSON.parse(storedUsuario))
+    try {
+      const storedToken = localStorage.getItem('token')
+      const storedUsuario = localStorage.getItem('usuario')
+
+      if (storedToken && storedUsuario) {
+        setToken(storedToken)
+        setUsuario(JSON.parse(storedUsuario))
+      }
+    } catch (error) {
+      console.error('Error cargando sesión:', error)
+      localStorage.removeItem('token')
+      localStorage.removeItem('usuario')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
+  // 🔹 Login
   const login = (newToken: string, newUsuario: Usuario) => {
     localStorage.setItem('token', newToken)
     localStorage.setItem('usuario', JSON.stringify(newUsuario))
@@ -37,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUsuario(newUsuario)
   }
 
+  // 🔹 Logout
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('usuario')
@@ -45,16 +60,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{
-      usuario,
-      token,
-      login,
-      logout,
-      isAdmin: usuario?.rol === 'admin'
-    }}>
+    <AuthContext.Provider
+      value={{
+        usuario,
+        token,
+        loading,
+        login,
+        logout,
+        isAdmin: usuario?.rol === 'admin'
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+// 🔹 Hook seguro
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext)
+
+  if (context === null) {
+    throw new Error('useAuth debe usarse dentro de AuthProvider')
+  }
+
+  return context
+}
