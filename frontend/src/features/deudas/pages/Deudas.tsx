@@ -73,8 +73,14 @@ export default function Deudas() {
           <EmptyState
             title="No hay deudas"
             description="Creá tu primera deuda para comenzar"
-            actionText="+ Crear primera deuda"
-            onAction={openForm}
+            action={
+              <button
+                onClick={openForm}
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+              >
+                + Crear primera deuda
+              </button>
+            }
           />
         ) : (
           <DeudasTable deudas={deudas} onEliminar={handleEliminar} deletingId={deletingId} />

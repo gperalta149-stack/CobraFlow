@@ -1,57 +1,106 @@
-import type { ReactElement } from 'react'
+import type { ReactNode } from 'react'
+
+type Variant = 'default' | 'soft' | 'minimal'
+type Size = 'sm' | 'md' | 'lg'
 
 interface EmptyStateProps {
   title: string
-  description: string
-  icon?: ReactElement
-  actionText?: string
-  onAction?: () => void
-  variant?: 'default' | 'compact'
+  description?: string
+
+  icon?: ReactNode
+  action?: ReactNode // más flexible que actionText + onAction
+
+  variant?: Variant
+  size?: Size
+
+  className?: string
 }
 
 export function EmptyState({
   title,
   description,
   icon,
-  actionText,
-  onAction,
-  variant = 'default'
+  action,
+  variant = 'default',
+  size = 'md',
+  className = ''
 }: EmptyStateProps) {
-  const isCompact = variant === 'compact'
+
+  const sizes = {
+    sm: {
+      container: 'p-6',
+      iconBox: 'w-12 h-12',
+      icon: 'w-6 h-6',
+      title: 'text-base',
+      desc: 'text-xs max-w-xs'
+    },
+    md: {
+      container: 'p-10',
+      iconBox: 'w-16 h-16',
+      icon: 'w-8 h-8',
+      title: 'text-lg',
+      desc: 'text-sm max-w-sm'
+    },
+    lg: {
+      container: 'p-14',
+      iconBox: 'w-20 h-20',
+      icon: 'w-10 h-10',
+      title: 'text-xl',
+      desc: 'text-base max-w-md'
+    }
+  }
+
+  const variants = {
+    default: 'bg-white shadow-sm',
+    soft: 'bg-gray-50 border border-gray-100',
+    minimal: ''
+  }
+
+  const s = sizes[size]
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm text-center animate-fade-in ${
-      isCompact ? 'p-6' : 'p-10'
-    }`}>
-      
-      {/* Contenedor de ícono con peso visual */}
-      <div className={`mx-auto mb-4 flex items-center justify-center rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 ${
-        isCompact ? 'w-12 h-12' : 'w-16 h-16'
-      }`}>
-        <div className={isCompact ? 'w-6 h-6' : 'w-8 h-8'}>
-          {icon}
+    <div
+      className={`
+        text-center rounded-xl animate-fade-in
+        ${variants[variant]}
+        ${s.container}
+        ${className}
+      `}
+      role="status"
+      aria-live="polite"
+    >
+      {/* ICON */}
+      {icon && (
+        <div
+          className={`
+            mx-auto mb-4 flex items-center justify-center rounded-xl
+            bg-gradient-to-br from-gray-50 to-gray-100
+            ${s.iconBox}
+          `}
+        >
+          <div className={`${s.icon} text-gray-400`}>
+            {icon}
+          </div>
         </div>
-      </div>
+      )}
 
-      <h3 className={`font-semibold text-gray-800 mb-2 ${
-        isCompact ? 'text-base' : 'text-lg'
-      }`}>
+      {/* TITLE */}
+      <h3 className={`font-semibold text-gray-800 mb-2 ${s.title}`}>
         {title}
       </h3>
 
-      <p className={`text-gray-500 mx-auto ${
-        isCompact ? 'text-xs max-w-xs' : 'text-sm max-w-sm'
-      }`}>
-        {description}
-      </p>
+      {/* DESCRIPTION */}
+      {description && (
+        <p className={`text-gray-500 mx-auto ${s.desc}`}>
+          {description}
+        </p>
+      )}
 
-      {actionText && onAction && (
-        <button
-          onClick={onAction}
-          className="mt-6 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-sm"
-        >
-          {actionText}
-        </button>
+      {/* ACTION SLOT */}
+      {action && (
+        <div className="mt-6">
+          {action}
+        </div>
       )}
     </div>
   )
