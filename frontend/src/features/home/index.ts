@@ -1,0 +1,8 @@
+export { Home } from './pages/Home'
+export { Hero } from './components/Hero'
+export { SocialProof } from './components/SocialProof'
+export { HowItWorks } from './components/HowItWorks'
+export { Features } from './components/Features'
+export { Testimonial } from './components/Testimonial'
+export { Stats } from './components/Stats'
+export { CTA } from './components/CTA'
