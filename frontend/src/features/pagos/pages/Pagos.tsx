@@ -3,7 +3,8 @@ import { usePagoForm } from '../hooks/usePagoForm'
 import { PagoForm } from '../components/PagoForm'
 import { PagosTable } from '../components/PagosTable'
 import { EmptyState } from '../../../components/shared/EmptyState'
-import { DollarSign } from 'lucide-react'
+import { generarReportePagos } from '../../../utils/pdfGenerator'  // NUEVO
+import { DollarSign, FileText } from 'lucide-react'  // NUEVO: agregar FileText
 
 export default function Pagos() {
   const { pagos, deudas, loading, error, refetchData, loadData } = usePagos()
@@ -11,6 +12,20 @@ export default function Pagos() {
     showForm, form, error: formError, isSubmitting, deudaSeleccionada,
     handleChange, handleSubmit, handleCancel, openForm
   } = usePagoForm({ deudas, onSuccess: refetchData })
+
+  // NUEVA FUNCIÓN: Exportar reporte de pagos a PDF
+  const handleExportarReporte = async () => {
+    if (pagos.length === 0) {
+      alert('No hay pagos para exportar')
+      return
+    }
+    try {
+      await generarReportePagos(pagos)
+    } catch (error) {
+      console.error('Error generando reporte:', error)
+      alert('Error al generar el reporte')
+    }
+  }
 
   if (loading && pagos.length === 0) {
     return (
@@ -47,14 +62,26 @@ export default function Pagos() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Pagos</h1>
-          <button
-            onClick={openForm}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Registrar Pago
-          </button>
+          <div className="flex gap-2">
+            {/* NUEVO BOTÓN: Exportar reporte PDF */}
+            <button
+              onClick={handleExportarReporte}
+              disabled={pagos.length === 0}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Exportar Reporte PDF
+            </button>
+            {/* Botón existente */}
+            <button
+              onClick={openForm}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              + Registrar Pago
+            </button>
+          </div>
         </div>
 
         {showForm && (

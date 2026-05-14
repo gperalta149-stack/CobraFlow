@@ -1,7 +1,9 @@
 import type { Pago } from '../types'
+import { generarComprobantePago } from '../../../utils/pdfGenerator'
 
 interface PagosTableProps {
   pagos: Pago[]
+  onGenerarComprobante?: (pago: Pago) => void  // NUEVO
 }
 
 const formatDate = (dateString: string): string => {
@@ -17,6 +19,15 @@ const formatDate = (dateString: string): string => {
 }
 
 export function PagosTable({ pagos }: PagosTableProps) {
+  const handleGenerarComprobante = async (pago: Pago) => {
+    try {
+      await generarComprobantePago(pago, pago.deudas, pago.clientes)
+    } catch (error) {
+      console.error('Error generando comprobante:', error)
+      alert('Error al generar el comprobante')
+    }
+  }
+
   if (pagos.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow p-8 text-center">
@@ -36,6 +47,7 @@ export function PagosTable({ pagos }: PagosTableProps) {
               <th className="p-3 text-left">Monto pagado</th>
               <th className="p-3 text-left">Fecha</th>
               <th className="p-3 text-left">Observaciones</th>
+              <th className="p-3 text-left">Acciones</th>  {/* NUEVO */}
             </tr>
           </thead>
           <tbody>
@@ -55,6 +67,14 @@ export function PagosTable({ pagos }: PagosTableProps) {
                 </td>
                 <td className="p-3 text-gray-600 max-w-xs truncate">
                   {p.observaciones || '-'}
+                </td>
+                <td className="p-3">
+                  <button
+                    onClick={() => handleGenerarComprobante(p)}
+                    className="text-blue-600 hover:text-blue-800 transition-colors text-sm flex items-center gap-1"
+                  >
+                    📄 Comprobante
+                  </button>
                 </td>
               </tr>
             ))}
