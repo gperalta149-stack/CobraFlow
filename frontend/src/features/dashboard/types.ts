@@ -8,6 +8,7 @@ export interface KPIs {
   totalMontoPendiente: number
   totalMontoDeudas: number
   totalRecaudadoMes: number
+  tasaRecuperacion?: string
 }
 
 export interface TopCliente {
@@ -33,3 +34,14 @@ export interface DashboardData {
 }
 
 export type UrgencyLevel = 'urgent' | 'warning' | 'normal'
+
+export interface DatosEvolucionPagos {
+  mes: string
+  recaudado: number
+}
+
+export interface DatosComparativa {
+  nombre: string
+  valor: number
+  color: string
+}
