@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useClientes } from '../hooks/useClientes'
 import { useClienteForm } from '../hooks/useClienteForm'
 import { useClienteDelete } from '../hooks/useClienteDelete'
@@ -5,10 +6,16 @@ import { ClienteFilters } from '../components/ClienteFilters'
 import { ClienteForm } from '../components/ClienteForm'
 import { ClientesTable } from '../components/ClientesTable'
 import { EmptyState } from '../../../components/shared/EmptyState'
+import { ClienteDetailModal } from '../components/ClienteDetailModal'
+import { ClienteHistorialPagos } from '../components/ClienteHistorialPagos'
+import { ClienteResumenFinanciero } from '../components/ClienteResumenFinanciero'
+import { ClienteImportModal } from '../components/ClienteImportModal'
+import { clientesApi } from '../services/clientesApi'
 import { Users } from 'lucide-react'
-
+import type { Cliente } from '../types'
 
 export default function Clientes() {
+  // Estados existentes
   const { clientes, loading, error, buscar, setBuscar, refetchClientes, loadData } = useClientes()
   const { 
     showForm, editando, form, error: formError, isSubmitting, nombreInputRef,
@@ -16,6 +23,43 @@ export default function Clientes() {
   } = useClienteForm({ onSuccess: refetchClientes })
   const { deletingId, handleEliminar } = useClienteDelete({ onSuccess: refetchClientes })
 
+  // NUEVOS ESTADOS para las funcionalidades
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null)
+  const [clienteHistorialPagos, setClienteHistorialPagos] = useState<Cliente | null>(null)
+  const [clienteResumen, setClienteResumen] = useState<Cliente | null>(null)
+  const [showImportModal, setShowImportModal] = useState(false)
+
+  // NUEVA FUNCIÓN: Exportar a Excel
+  const handleExport = async () => {
+    try {
+      const response = await clientesApi.exportToExcel(buscar)
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Error al exportar clientes')
+    }
+  }
+
+  // NUEVAS FUNCIONES para los modales
+  const handleVerDetalle = (cliente: Cliente) => {
+    setClienteSeleccionado(cliente)
+  }
+
+  const handleVerPagos = (cliente: Cliente) => {
+    setClienteHistorialPagos(cliente)
+  }
+
+  const handleVerResumen = (cliente: Cliente) => {
+    setClienteResumen(cliente)
+  }
+
+  // Estados de carga y error (existentes, sin cambios)
   if (loading && clientes.length === 0) {
     return (
       <div className="min-h-screen bg-gray-100">
@@ -52,18 +96,38 @@ export default function Clientes() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="p-6">
+        {/* HEADER CON BOTONES MEJORADOS */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
-          <button
-            onClick={handleNuevoCliente}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Nuevo Cliente
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {/* Botón Importar - NUEVO */}
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              📥 Importar Excel
+            </button>
+            {/* Botón Exportar - NUEVO */}
+            <button
+              onClick={handleExport}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+            >
+              📊 Exportar Excel
+            </button>
+            {/* Botón Nuevo Cliente - Existente */}
+            <button
+              onClick={handleNuevoCliente}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              + Nuevo Cliente
+            </button>
+          </div>
         </div>
 
+        {/* Filtros - Existente */}
         <ClienteFilters buscar={buscar} setBuscar={setBuscar} disabled={loading} />
 
+        {/* Formulario - Existente */}
         {showForm && (
           <ClienteForm
             form={form}
@@ -77,6 +141,7 @@ export default function Clientes() {
           />
         )}
 
+        {/* Tabla o EmptyState - MODIFICADO: agregar nuevas props */}
         {clientes.length === 0 && !loading ? (
           <EmptyState
             title="No hay clientes"
@@ -94,12 +159,50 @@ export default function Clientes() {
         ) : (
           <ClientesTable
             clientes={clientes}
-            onEditar={handleEditar}
-            onEliminar={handleEliminar}
-            deletingId={deletingId}
+            onVer={handleVerDetalle}           // NUEVO
+            onEditar={handleEditar}             // Existente
+            onVerPagos={handleVerPagos}         // NUEVO
+            onVerResumen={handleVerResumen}     // NUEVO
+            onEliminar={handleEliminar}         // Existente
+            deletingId={deletingId}             // Existente
           />
         )}
       </div>
+
+      {/* MODALES NUEVOS */}
+
+      {/* Modal de detalle de cliente */}
+      {clienteSeleccionado && (
+        <ClienteDetailModal
+          clienteId={clienteSeleccionado.id}
+          onClose={() => setClienteSeleccionado(null)}
+        />
+      )}
+
+      {/* Modal de historial de pagos */}
+      {clienteHistorialPagos && (
+        <ClienteHistorialPagos
+          clienteId={clienteHistorialPagos.id}
+          clienteNombre={clienteHistorialPagos.nombre}
+          onClose={() => setClienteHistorialPagos(null)}
+        />
+      )}
+
+      {/* Modal de resumen financiero */}
+      {clienteResumen && (
+        <ClienteResumenFinanciero
+          clienteId={clienteResumen.id}
+          onClose={() => setClienteResumen(null)}
+        />
+      )}
+
+      {/* Modal de importación */}
+      {showImportModal && (
+        <ClienteImportModal
+          onClose={() => setShowImportModal(false)}
+          onSuccess={refetchClientes}
+        />
+      )}
     </div>
   )
 }

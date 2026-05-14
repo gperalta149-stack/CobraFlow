@@ -87,3 +87,52 @@ export const deleteCliente = async (req: AuthRequest, res: Response) => {
   if (error) return res.status(400).json({ error: error.message })
   res.json({ mensaje: 'Cliente desactivado correctamente' })
 }
+
+export const exportClientesToExcel = async (req: AuthRequest, res: Response) => {
+  try {
+    const { buscar } = req.query
+
+    let query = supabase
+      .from('clientes')
+      .select('nombre, email, telefono, direccion, activo, created_at')
+      .eq('activo', true)
+      .order('nombre', { ascending: true })
+
+    if (buscar) {
+      query = query.or(`nombre.ilike.%${buscar}%,email.ilike.%${buscar}%`)
+    }
+
+    const { data: clientes, error } = await query
+
+    if (error) throw error
+
+    // Crear cabeceras del Excel
+    const headers = ['Nombre', 'Email', 'Teléfono', 'Dirección', 'Fecha de registro']
+    
+    // Formatear datos
+    const rows = clientes.map(c => [
+      c.nombre,
+      c.email || '',
+      c.telefono || '',
+      c.direccion || '',
+      new Date(c.created_at).toLocaleDateString('es-AR')
+    ])
+
+    // Generar CSV (compatible con Excel)
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n')
+
+    // Agregar BOM para caracteres especiales (ñ, é, etc.)
+    const bom = '\uFEFF'
+    
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename=clientes_${new Date().toISOString().split('T')[0]}.csv`)
+    res.send(bom + csvContent)
+
+  } catch (error) {
+    console.error('Error exportando clientes:', error)
+    res.status(500).json({ error: 'Error al exportar clientes' })
+  }
+}

@@ -2,7 +2,10 @@ import type { Cliente } from '../types'
 
 interface ClientesTableProps {
   clientes: Cliente[]
+  onVer: (cliente: Cliente) => void           // NUEVO
   onEditar: (cliente: Cliente) => void
+  onVerPagos: (cliente: Cliente) => void      // NUEVO
+  onVerResumen: (cliente: Cliente) => void    // NUEVO
   onEliminar: (id: string) => void
   deletingId: string | null
 }
@@ -15,7 +18,15 @@ const formatPhone = (phone: string): string => {
   return phone
 }
 
-export function ClientesTable({ clientes, onEditar, onEliminar, deletingId }: ClientesTableProps) {
+export function ClientesTable({ 
+  clientes, 
+  onVer, 
+  onEditar, 
+  onVerPagos, 
+  onVerResumen, 
+  onEliminar, 
+  deletingId 
+}: ClientesTableProps) {
   return (
     <div className="bg-white rounded-xl shadow overflow-hidden">
       <div className="overflow-x-auto">
@@ -37,14 +48,37 @@ export function ClientesTable({ clientes, onEditar, onEliminar, deletingId }: Cl
                 <td className="p-3 text-gray-600">{formatPhone(c.telefono)}</td>
                 <td className="p-3 text-gray-600">{c.direccion || '-'}</td>
                 <td className="p-3">
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    {/* Botón Ver */}
+                    <button
+                      onClick={() => onVer(c)}
+                      className="text-blue-600 hover:text-blue-800 transition-colors text-sm"
+                    >
+                      Ver
+                    </button>
+                    {/* Botón Editar */}
                     <button
                       onClick={() => onEditar(c)}
                       disabled={deletingId === c.id}
-                      className="text-blue-600 hover:text-blue-800 transition-colors text-sm"
+                      className="text-blue-600 hover:text-blue-800 transition-colors text-sm disabled:opacity-50"
                     >
                       Editar
                     </button>
+                    {/* Botón Pagos */}
+                    <button
+                      onClick={() => onVerPagos(c)}
+                      className="text-green-600 hover:text-green-800 transition-colors text-sm"
+                    >
+                      Pagos
+                    </button>
+                    {/* Botón Resumen */}
+                    <button
+                      onClick={() => onVerResumen(c)}
+                      className="text-purple-600 hover:text-purple-800 transition-colors text-sm"
+                    >
+                      Resumen
+                    </button>
+                    {/* Botón Eliminar */}
                     <button
                       onClick={() => onEliminar(c.id)}
                       disabled={deletingId === c.id}
