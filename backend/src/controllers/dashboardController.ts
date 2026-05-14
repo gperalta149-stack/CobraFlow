@@ -7,6 +7,48 @@ const actualizarVencidas = async () => {
   await supabase.rpc('actualizar_deudas_vencidas')
 }
 
+// ============================================
+// NUEVO: Obtener evolución de pagos de los últimos 6 meses (HU-36)
+// ============================================
+export const getEvolucionPagos = async (req: AuthRequest, res: Response) => {
+  try {
+    const seisMesesAtras = new Date()
+    seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6)
+    seisMesesAtras.setDate(1)
+    seisMesesAtras.setHours(0, 0, 0, 0)
+
+    const { data, error } = await supabase
+      .from('pagos')
+      .select('monto, created_at')
+      .gte('created_at', seisMesesAtras.toISOString())
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+
+    // Agrupar por mes
+    const pagosPorMes: Record<string, number> = {}
+    
+    data?.forEach(pago => {
+      const fecha = new Date(pago.created_at)
+      const nombreMes = fecha.toLocaleDateString('es-AR', { month: 'short', year: 'numeric' })
+      pagosPorMes[nombreMes] = (pagosPorMes[nombreMes] || 0) + Number(pago.monto)
+    })
+
+    const resultado = Object.entries(pagosPorMes).map(([mes, recaudado]) => ({
+      mes,
+      recaudado
+    }))
+
+    res.json(resultado)
+  } catch (error) {
+    console.error('Error cargando evolución de pagos:', error)
+    res.status(500).json({ error: 'Error al cargar evolución de pagos' })
+  }
+}
+
+// ============================================
+// Dashboard principal
+// ============================================
 export const getDashboard = async (req: AuthRequest, res: Response) => {
   // Actualiza estados antes de calcular métricas
   await actualizarVencidas()

@@ -2,18 +2,36 @@ import { useDashboard } from '../hooks/useDashboard'
 import { StatsCards } from '../components/StatsCards'
 import { TopClientesChart } from '../components/TopClientesChart'
 import { AlertasList } from '../components/AlertasList'
+import { DeudasPorEstadoChart } from '../components/DeudasPorEstadoChart'  // NUEVO
+import { EvolucionPagosChart } from '../components/EvolucionPagosChart'    // NUEVO
+import { ComparativaChart } from '../components/ComparativaChart'          // NUEVO
 
 export default function Dashboard() {
-  const { kpis, topClientes, alertas, loading, error, maxSaldo, collectionRate, pendingPercentage } = useDashboard()
+  const { 
+    kpis, 
+    topClientes, 
+    alertas, 
+    loading, 
+    error, 
+    maxSaldo, 
+    collectionRate, 
+    pendingPercentage,
+    deudasPorEstadoData,      // NUEVO
+    evolucionPagos,           // NUEVO
+    comparativaData           // NUEVO
+  } = useDashboard()
 
   if (loading) {
     return (
       <div className="p-6">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-8"></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm animate-pulse"><div className="h-4 w-24 bg-gray-200 rounded mb-2"></div><div className="h-8 w-32 bg-gray-200 rounded"></div></div>
-          <div className="bg-white rounded-xl p-6 shadow-sm animate-pulse"><div className="h-4 w-24 bg-gray-200 rounded mb-2"></div><div className="h-8 w-32 bg-gray-200 rounded"></div></div>
-          <div className="bg-white rounded-xl p-6 shadow-sm animate-pulse"><div className="h-4 w-24 bg-gray-200 rounded mb-2"></div><div className="h-8 w-32 bg-gray-200 rounded"></div></div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
+              <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+              <div className="h-8 w-32 bg-gray-200 rounded"></div>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -25,7 +43,9 @@ export default function Dashboard() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
           <p className="font-semibold text-lg text-red-600">Error al cargar el dashboard</p>
           <p className="text-sm text-red-500 mt-2">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">Reintentar</button>
+          <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">
+            Reintentar
+          </button>
         </div>
       </div>
     )
@@ -43,10 +63,23 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* KPIs principales */}
       <StatsCards kpis={kpis} collectionRate={collectionRate} pendingPercentage={pendingPercentage} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopClientesChart clientes={topClientes} maxSaldo={maxSaldo} />
+      {/* FILA 1: Gráficos principales */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <DeudasPorEstadoChart data={deudasPorEstadoData} />      {/* HU-35 */}
+        <EvolucionPagosChart data={evolucionPagos} />            {/* HU-36 */}
+      </div>
+
+      {/* FILA 2: Comparativa y Top clientes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <ComparativaChart data={comparativaData} />               {/* HU-37 */}
+        <TopClientesChart clientes={topClientes} maxSaldo={maxSaldo} />  {/* HU-38 */}
+      </div>
+
+      {/* FILA 3: Alertas de vencimiento */}
+      <div className="grid grid-cols-1 gap-6">
         <AlertasList alertas={alertas} />
       </div>
 
