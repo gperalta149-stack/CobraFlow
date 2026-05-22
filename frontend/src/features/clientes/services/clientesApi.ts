@@ -2,10 +2,21 @@ import api from '../../../services/api'
 import type { Cliente, ClienteFormData } from '../types'
 
 export const clientesApi = {
-  getAll: (buscar?: string) => 
-    api.get<Cliente[]>(`/clientes${buscar ? `?buscar=${buscar}` : ''}`),
+  getAll: (buscar?: string, page?: number, limit?: number) => {
+    const params = new URLSearchParams()
 
-  // AGREGAR ESTO
+    if (buscar) params.append('buscar', buscar)
+
+    if (page && limit) {
+      params.append('page', page.toString())
+      params.append('limit', limit.toString())
+    }
+
+    const url = `/clientes${params.toString() ? `?${params.toString()}` : ''}`
+
+    return api.get<Cliente[]>(url)
+  },
+
   getById: (id: string) =>
     api.get<Cliente>(`/clientes/${id}`),
 
