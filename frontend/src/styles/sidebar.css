@@ -1,0 +1,192 @@
+/* frontend/src/styles/sidebar.css */
+@import './theme.css';
+
+/* ── Sidebar ─────────────────────────────────────── */
+.sidebar {
+  width: 240px;
+  background-color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+
+.sidebar.collapsed { width: 64px; }
+
+/* Logo */
+.sidebar-logo {
+  padding: 16px 18px 14px;  /* ← ajustado para coincidir con navbar height */
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  white-space: nowrap;
+  min-height: 58px;  /* ← misma altura que navbar */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-logo { 
+  padding: 16px 0 14px; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  min-height: 58px;
+}
+
+.sidebar-logo-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .sidebar-logo-title { display: none; }
+
+.sidebar-logo-subtitle {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .sidebar-logo-subtitle { display: none; }
+
+.sidebar-logo-icon {
+  display: none;
+  font-size: 20px;
+}
+
+.sidebar.collapsed .sidebar-logo-icon { display: block; }
+
+/* Nav */
+.sidebar-nav {
+  flex: 1;
+  padding-top: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Section label */
+.section-label {
+  padding: 12px 18px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.sidebar.collapsed .section-label {
+  padding: 12px 0 4px;
+  text-align: center;
+  font-size: 0;
+}
+
+.sidebar.collapsed .section-label::after {
+  content: '·';
+  font-size: 14px;
+  color: rgba(255,255,255,0.15);
+  display: block;
+  text-align: center;
+}
+
+/* Nav items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  margin: 1px 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  margin: 1px 8px;
+  padding: 8px 0;
+}
+
+.sidebar.collapsed .nav-label { display: none; }
+.sidebar.collapsed .nav-badge { display: none; }
+
+/* Toggle button */
+.sidebar-toggle {
+  position: fixed;
+  top: 16px;
+  left: 226px;
+  width: 26px;
+  height: 26px;
+  background: #1e2334;
+  border: 0.5px solid #2e3347;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #94a3b8;
+  z-index: 60;
+  transition: left 0.25s ease, background 0.15s, color 0.15s;
+}
+
+.sidebar-toggle.collapsed { left: 51px; }
+
+.sidebar-toggle:hover {
+  background: #1D9E75;
+  color: #fff;
+  border-color: #1D9E75;
+}
+
+/* Main content */
+.main-content {
+  margin-left: 240px;
+  min-height: 100vh;
+  background: var(--bg-dark);
+  transition: margin-left 0.25s ease;
+}
+
+.main-content.collapsed { margin-left: 64px; }
+
+/* Navbar - alineado con sidebar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 240px;
+  right: 0;
+  height: 58px;  /* ← misma altura que sidebar-logo */
+  background: #1e2334;
+  border-bottom: 0.5px solid #2e3347;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  transition: left 0.25s ease;
+}
+
+.navbar.collapsed { left: 64px; }
+
+/* User menu */
+.user-menu { 
+  padding: 8px; 
+  border-top: 0.5px solid rgba(255,255,255,0.08); 
+  position: relative; 
+}
+
+.sidebar.collapsed .user-info { display: none; }
+.sidebar.collapsed .user-chevron { display: none; }
+.sidebar.collapsed .user-avatar { margin: 0 auto; }
+.sidebar.collapsed .user-menu { display: flex; justify-content: center; padding: 8px 0; }

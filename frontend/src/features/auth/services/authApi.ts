@@ -10,12 +10,13 @@ export const authApi = {
   
   register: (data: RegisterForm) => 
     api.post('/auth/register', {
-      nombre: data.nombre,
-      email: data.email,
+      nombre: data.nombre.trim(),
+      apellido: data.apellido.trim(),  // ← AGREGAR
+      email: data.email.trim(),
       password: data.password
     }),
   
-  updateProfile: (data: { nombre: string; email: string }) => 
+  updateProfile: (data: { nombre: string; apellido: string; email: string }) => 
     api.put('/auth/perfil', data),
   
   changePassword: (data: { passwordActual: string; passwordNuevo: string }) => 

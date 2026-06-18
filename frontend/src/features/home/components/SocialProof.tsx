@@ -1,34 +1,19 @@
-const getDelayClass = (delay: number): string => {
-  const delayMap: Record<number, string> = {
-    0: '',
-    100: 'animation-delay-100',
-    200: 'animation-delay-200',
-    300: 'animation-delay-300'
-  }
-  return delayMap[delay] || ''
-}
-
+// frontend/src/features/home/components/SocialProof.tsx
 export function SocialProof() {
+  const items = [
+    { value: '+120', label: 'Negocios activos', color: '#1D9E75' },
+    { value: '+35%', label: 'Más cobranza', color: '#1D9E75' },
+    { value: '24/7', label: 'Disponibilidad', color: '#1D9E75' },
+    { value: '★ 4.9', label: 'Satisfacción', color: '#EF9F27' },
+  ]
   return (
-    <section className="py-16 border-y border-gray-100 bg-gray-50/30">
-      <div className="max-w-6xl mx-auto px-6">
-        <p className="text-center text-gray-400 text-sm mb-8 uppercase tracking-wide">
-          CONFIADO POR NEGOCIOS EN TODO EL PAÍS
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[
-            { value: "+120", label: "Negocios activos", color: "text-blue-600", delay: 0 },
-            { value: "+35%", label: "Aumento en cobranza", color: "text-green-600", delay: 100 },
-            { value: "24/7", label: "Disponibilidad total", color: "text-purple-600", delay: 200 },
-            { value: "★★★★★", label: "+100 usuarios felices", color: "text-yellow-500", delay: 300 }
-          ].map((item, i) => (
-            <div key={i} className={`animate-fade-in ${getDelayClass(item.delay)}`}>
-              <p className={`text-3xl md:text-4xl font-bold ${item.color}`}>{item.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{item.label}</p>
-            </div>
-          ))}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '0.5px solid #2e3347', borderBottom: '0.5px solid #2e3347' }}>
+      {items.map((item, i) => (
+        <div key={i} style={{ padding: '24px', textAlign: 'center', borderRight: i < items.length - 1 ? '0.5px solid #2e3347' : 'none' }}>
+          <p style={{ fontSize: 26, fontWeight: 700, color: item.color }}>{item.value}</p>
+          <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{item.label}</p>
         </div>
-      </div>
-    </section>
+      ))}
+    </div>
   )
 }

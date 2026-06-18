@@ -1,3 +1,4 @@
+// frontend/src/features/perfil/components/PerfilForm.tsx
 import type { PerfilFormData } from '../types'
 
 interface PerfilFormProps {
@@ -10,73 +11,111 @@ interface PerfilFormProps {
   onSubmit: (e: React.FormEvent) => void
 }
 
-export function PerfilForm({
-  form,
-  error,
-  exito,
-  isSubmitting,
-  rol,
-  onChange,
-  onSubmit
-}: PerfilFormProps) {
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  backgroundColor: '#1a1d2e',
+  border: '0.5px solid #2e3347',
+  borderRadius: 8,
+  padding: '10px 14px',
+  fontSize: 13,
+  color: '#f0f2f5',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const labelStyle: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#6b7280',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: 6,
+  display: 'block',
+}
+
+export function PerfilForm({ form, error, exito, isSubmitting, rol, onChange, onSubmit }: PerfilFormProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow">
-      <h2 className="font-bold text-gray-700 mb-4">Datos personales</h2>
-      
+    <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
       {error && (
-        <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
+        <div style={{ background: 'rgba(226,75,74,0.1)', border: '0.5px solid rgba(226,75,74,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#f87171' }}>
           {error}
         </div>
       )}
-      
+
       {exito && (
-        <div className="bg-green-100 text-green-600 p-3 rounded mb-4">
-          {exito}
+        <div style={{ background: 'rgba(29,158,117,0.1)', border: '0.5px solid rgba(29,158,117,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#34d399' }}>
+          ✓ {exito}
         </div>
       )}
-      
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre
-          </label>
-          <input
-            name="nombre"
-            value={form.nombre}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-            disabled={isSubmitting}
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={onChange}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-            disabled={isSubmitting}
-          />
-        </div>
-        
-        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
-          Rol: <span className="font-medium text-gray-700">{rol}</span>
-        </div>
-        
-        <button
-          type="submit"
+
+      <div>
+        <label style={labelStyle}>Nombre</label>
+        <input
+          name="nombre"
+          value={form.nombre}
+          onChange={onChange}
+          style={inputStyle}
+          required
           disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-      </form>
-    </div>
+          onFocus={e => (e.target.style.borderColor = '#1D9E75')}
+          onBlur={e => (e.target.style.borderColor = '#2e3347')}
+        />
+      </div>
+
+      <div>
+        <label style={labelStyle}>Email</label>
+        <input
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={onChange}
+          style={inputStyle}
+          required
+          disabled={isSubmitting}
+          onFocus={e => (e.target.style.borderColor = '#1D9E75')}
+          onBlur={e => (e.target.style.borderColor = '#2e3347')}
+        />
+      </div>
+
+      <div style={{
+        background: '#1a1d2e',
+        border: '0.5px solid #2e3347',
+        borderRadius: 8,
+        padding: '10px 14px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 12, color: '#6b7280' }}>Rol</span>
+        <span style={{
+          fontSize: 11, fontWeight: 600,
+          background: 'rgba(29,158,117,0.15)',
+          color: '#1D9E75',
+          border: '0.5px solid rgba(29,158,117,0.3)',
+          padding: '3px 8px', borderRadius: 6,
+          textTransform: 'capitalize',
+        }}>
+          {rol}
+        </span>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        style={{
+          backgroundColor: '#1D9E75',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 8,
+          padding: '10px 0',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: isSubmitting ? 'not-allowed' : 'pointer',
+          opacity: isSubmitting ? 0.6 : 1,
+          marginTop: 4,
+        }}
+      >
+        {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
+      </button>
+    </form>
   )
 }

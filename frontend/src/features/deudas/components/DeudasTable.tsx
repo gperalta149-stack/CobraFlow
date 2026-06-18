@@ -1,135 +1,274 @@
+// frontend/src/features/deudas/components/DeudasTable.tsx
 import { useState } from 'react'
 import type { Deuda } from '../types'
+import { useMoraConfig } from '../../../hooks/useMoraConfig'
+import { useMonedaConfig } from '../../../hooks/useMonedaConfig'  // ← AGREGAR
+import { calcularMora } from '../../../lib/calcularMora'
+import { MontoCell } from '../../../components/shared/MontoCell'
+import '../../../styles/table.css'
 
-const estadoColor: Record<string, string> = {
-  pendiente: 'bg-yellow-100 text-yellow-700',
-  pagada: 'bg-green-100 text-green-700',
-  vencida: 'bg-red-100 text-red-700',
-  parcial: 'bg-blue-100 text-blue-700'
+const AVATAR_COLORS = ['#1D9E75', '#378ADD', '#EF9F27', '#E24B4A', '#8b5cf6', '#ec4899']
+
+const estadoRowClass: Record<string, string> = {
+  pendiente: 'row-estado-pendiente',
+  parcial:   'row-estado-parcial',
+  vencida:   'row-estado-vencida',
+  pagada:    'row-estado-pagada',
+}
+
+const estadoBadgeClass: Record<string, string> = {
+  pendiente: 'status-badge status-pendiente',
+  pagada:    'status-badge status-al-dia',
+  vencida:   'status-badge status-vencida',
+  parcial:   'status-badge status-parcial',
+}
+
+const estadoDotColor: Record<string, string> = {
+  pendiente: '#EF9F27',
+  parcial:   '#378ADD',
+  vencida:   '#E24B4A',
+  pagada:    '#1D9E75',
+}
+
+const estadoLabel: Record<string, string> = {
+  pendiente: 'Pendiente',
+  parcial:   'Parcial',
+  vencida:   'Vencida',
+  pagada:    'Al día',
 }
 
 const formatDate = (dateString: string): string => {
   try {
     return new Date(dateString).toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+      year: 'numeric', month: '2-digit', day: '2-digit',
     })
-  } catch {
-    return dateString
-  }
+  } catch { return dateString }
 }
 
-type SortColumn = 'cliente' | 'total' | 'pendiente' | 'fecha' | 'estado'
+const fmtARS = (n: number) => `$${Math.round(n).toLocaleString('es-AR')}`
+const fmtUSD = (n: number) =>
+  `USD ${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+
+type SortColumn    = 'cliente' | 'total' | 'pendiente' | 'fecha' | 'estado'
 type SortDirection = 'asc' | 'desc'
-type SortValue = string | number
 
 interface DeudasTableProps {
   deudas: Deuda[]
-  onEliminar: (id: string) => void
-  deletingId?: string | null
+  hayFiltrosActivos: boolean
+  onLimpiarFiltros: () => void
+  cotizacion?: number
 }
 
-export function DeudasTable({ deudas, onEliminar, deletingId }: DeudasTableProps) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>('fecha')
+export function DeudasTable({
+  deudas, hayFiltrosActivos, onLimpiarFiltros, cotizacion = 1,
+}: DeudasTableProps) {
+  const [sortColumn,    setSortColumn]    = useState<SortColumn>('fecha')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const { config: moraConfig } = useMoraConfig()
+  const { debeMostrarEquivalencia } = useMonedaConfig()  // ← AGREGAR
+  const mostrarEquivalencia = debeMostrarEquivalencia('deudas')  // ← AGREGAR
 
   const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortColumn(column)
-      setSortDirection('asc')
-    }
+    if (sortColumn === column) setSortDirection(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortColumn(column); setSortDirection('asc') }
   }
 
-  const getSortValue = (deuda: Deuda, column: SortColumn): SortValue => {
+  const getSortValue = (deuda: Deuda, column: SortColumn): string | number => {
     switch (column) {
-      case 'cliente':
-        return (deuda.clientes?.nombre || '').toLowerCase()
-      case 'total':
-        return deuda.monto_total
-      case 'pendiente':
-        return deuda.saldo_pendiente
-      case 'fecha':
-        return new Date(deuda.fecha_vencimiento).getTime()
-      case 'estado':
-        return deuda.estado.toLowerCase()
-      default:
-        return ''
+      case 'cliente':   return (deuda.clientes?.nombre ?? '').toLowerCase()
+      case 'total':     return deuda.monto_total
+      case 'pendiente': return deuda.saldo_pendiente
+      case 'fecha':     return new Date(deuda.fecha_vencimiento).getTime()
+      case 'estado':    return deuda.estado.toLowerCase()
+      default:          return ''
     }
   }
 
-  const getSortedDeudas = (): Deuda[] => {
-    const sorted = [...deudas]
-    sorted.sort((a, b) => {
-      const aValue = getSortValue(a, sortColumn)
-      const bValue = getSortValue(b, sortColumn)
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-      return 0
-    })
-    return sorted
-  }
+  const getSortIcon = (column: SortColumn) =>
+    sortColumn !== column ? ' ↕' : sortDirection === 'asc' ? ' ↑' : ' ↓'
 
-  const getSortIcon = (column: SortColumn): string => {
-    if (sortColumn !== column) return '↕️'
-    return sortDirection === 'asc' ? '↑' : '↓'
-  }
+  const sortedDeudas = [...deudas].sort((a, b) => {
+    const aVal = getSortValue(a, sortColumn)
+    const bVal = getSortValue(b, sortColumn)
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1
+    if (aVal > bVal) return sortDirection === 'asc' ? 1  : -1
+    return 0
+  })
 
-  const sortedDeudas = getSortedDeudas()
+  if (deudas.length === 0) {
+    if (hayFiltrosActivos) {
+      return (
+        <div className="table-empty-state">
+          <p className="empty-icon">🔍</p>
+          <p className="empty-title">Sin resultados</p>
+          <p className="empty-description">Ninguna deuda coincide con los filtros.</p>
+          <button className="empty-action" onClick={onLimpiarFiltros}>Limpiar filtros</button>
+        </div>
+      )
+    }
+    return (
+      <div className="table-empty-state">
+        <p className="empty-icon">📄</p>
+        <p className="empty-title">Sin deudas registradas</p>
+        <p className="empty-description">Creá la primera deuda para comenzar.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 text-gray-600 text-sm">
+    <div className="table-container">
+      <div className="table-scroll-wrapper">
+        <table className="dark-table">
+          <thead>
             <tr>
-              <th className="p-3 text-left cursor-pointer hover:bg-gray-100 transition-colors select-none" onClick={() => handleSort('cliente')}>
-                Cliente {getSortIcon('cliente')}
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('cliente')}>
+                CLIENTE{getSortIcon('cliente')}
               </th>
-              <th className="p-3 text-left">Descripción</th>
-              <th className="p-3 text-left cursor-pointer hover:bg-gray-100 transition-colors select-none" onClick={() => handleSort('total')}>
-                Total {getSortIcon('total')}
+              <th>DESCRIPCIÓN</th>
+              <th style={{ textAlign: 'right', cursor: 'pointer' }} onClick={() => handleSort('total')}>
+                TOTAL{getSortIcon('total')}
               </th>
-              <th className="p-3 text-left">Pagado</th>
-              <th className="p-3 text-left cursor-pointer hover:bg-gray-100 transition-colors select-none" onClick={() => handleSort('pendiente')}>
-                Pendiente {getSortIcon('pendiente')}
+              <th style={{ textAlign: 'right' }}>PAGADO</th>
+              <th style={{ textAlign: 'right', cursor: 'pointer' }} onClick={() => handleSort('pendiente')}>
+                PENDIENTE{getSortIcon('pendiente')}
               </th>
-              <th className="p-3 text-left cursor-pointer hover:bg-gray-100 transition-colors select-none" onClick={() => handleSort('fecha')}>
-                Vencimiento {getSortIcon('fecha')}
+              {moraConfig?.mora_activa && (
+                <th className="col-mora" style={{ textAlign: 'right' }}>MORA</th>
+              )}
+              <th style={{ textAlign: 'center' }}>MONEDA</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('fecha')}>
+                VENCIMIENTO{getSortIcon('fecha')}
               </th>
-              <th className="p-3 text-left cursor-pointer hover:bg-gray-100 transition-colors select-none" onClick={() => handleSort('estado')}>
-                Estado {getSortIcon('estado')}
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('estado')}>
+                ESTADO{getSortIcon('estado')}
               </th>
-              <th className="p-3 text-left">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {sortedDeudas.map((d) => (
-              <tr key={d.id} className="border-t hover:bg-gray-50 transition-colors">
-                <td className="p-3 font-medium">{d.clientes?.nombre}</td>
-                <td className="p-3 text-gray-600">{d.descripcion}</td>
-                <td className="p-3">${Number(d.monto_total).toLocaleString()}</td>
-                <td className="p-3 text-green-600">${Number(d.monto_pagado).toLocaleString()}</td>
-                <td className="p-3 text-red-500 font-medium">${Number(d.saldo_pendiente).toLocaleString()}</td>
-                <td className="p-3 text-gray-600">{formatDate(d.fecha_vencimiento)}</td>
-                <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${estadoColor[d.estado]}`}>
-                    {d.estado}
-                  </span>
-                </td>
-                <td className="p-3">
-                  <button
-                    onClick={() => onEliminar(d.id)}
-                    disabled={deletingId === d.id}
-                    className="text-red-500 hover:text-red-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {deletingId === d.id ? 'Eliminando...' : 'Eliminar'}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {sortedDeudas.map((d, index) => {
+              const moneda          = d.moneda as 'ARS' | 'USD'
+              const cotizacionDeuda = Number(d.cotizacion) || cotizacion || 1
+
+              const totalARS     = Number(d.monto_total)
+              const totalUSD     = moneda === 'USD' ? Number(d.monto_original) : totalARS / cotizacion
+              const pagadoARS    = Number(d.monto_pagado)
+              const pagadoUSD    = moneda === 'USD' ? pagadoARS / cotizacionDeuda : pagadoARS / cotizacion
+              const pendienteARS = Number(d.saldo_pendiente)
+              const pendienteUSD = moneda === 'USD' ? pendienteARS / cotizacionDeuda : pendienteARS / cotizacion
+
+              const mora                 = calcularMora(pendienteARS, d.fecha_vencimiento, d.estado, moraConfig)
+              const moraOriginal         = moneda === 'USD' ? mora.montoMora / cotizacionDeuda : mora.montoMora
+              const totalConMoraOriginal = moneda === 'USD' ? mora.totalConMora / cotizacionDeuda : mora.totalConMora
+
+              const nombreCliente = d.clientes?.nombre ?? ''
+              const inicial       = nombreCliente[0]?.toUpperCase() ?? '?'
+              const avatarColor   = AVATAR_COLORS[index % AVATAR_COLORS.length]
+
+              const rowClass = [
+                estadoRowClass[d.estado] ?? '',
+                mora.tieneMora && !estadoRowClass[d.estado] ? 'row-mora' : '',
+              ].filter(Boolean).join(' ')
+
+              return (
+                <tr key={d.id} className={rowClass}>
+                  {/* Cliente */}
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div className="table-avatar" style={{ backgroundColor: avatarColor }}>
+                        {inicial}
+                      </div>
+                      <p className="table-cell-name">{d.clientes?.nombre ?? '—'}</p>
+                    </div>
+                  </td>
+
+                  {/* Descripción */}
+                  <td>
+                    <span className="deuda-descripcion">{d.descripcion}</span>
+                    {d.numero_factura && (
+                      <span className="factura-numero">#{d.numero_factura}</span>
+                    )}
+                  </td>
+
+                  {/* Total */}
+                  <td style={{ textAlign: 'right' }}>
+                    <span className={d.moneda === 'USD' ? 'table-monto-usd' : 'table-monto-ars'}>
+                      <MontoCell moneda={moneda} montoARS={totalARS} montoUSD={totalUSD} seccion="deudas" />
+                    </span>
+                  </td>
+
+                  {/* Pagado */}
+                  <td style={{ textAlign: 'right' }}>
+                    <span className="monto-pagado">
+                      <MontoCell moneda={moneda} montoARS={pagadoARS} montoUSD={pagadoUSD} seccion="deudas" />
+                    </span>
+                  </td>
+
+                  {/* Pendiente */}
+                  <td style={{ textAlign: 'right' }} translate="no">
+                    <span className={d.moneda === 'USD' ? 'table-monto-usd' : 'table-monto-ars'}>
+                      <MontoCell moneda={moneda} montoARS={pendienteARS} montoUSD={pendienteUSD} seccion="deudas" />
+                    </span>
+                    {mora.tieneMora && (
+                      <p className="mora-label">
+                        + mora → {moneda === 'USD' ? fmtUSD(totalConMoraOriginal) : fmtARS(mora.totalConMora)}
+                      </p>
+                    )}
+                  </td>
+
+                  {/* Mora (columna condicional) - CORREGIDO con toggle */}
+                  {moraConfig?.mora_activa && (
+                    <td style={{ textAlign: 'right' }} translate="no">
+                      {mora.tieneMora ? (
+                        <div>
+                          <p className="mora-label">
+                            +{moneda === 'USD' ? fmtUSD(moraOriginal) : fmtARS(mora.montoMora)}
+                          </p>
+                          {mostrarEquivalencia && (
+                            <p className="mora-detalle">
+                              {moneda === 'USD' 
+                                ? `≈ ${fmtARS(mora.montoMora)}` 
+                                : `≈ ${fmtUSD(mora.montoMora / cotizacion)}`
+                              }
+                            </p>
+                          )}
+                          <p className="mora-descripcion">{mora.descripcion}</p>
+                        </div>
+                      ) : (
+                        <span className="mora-detalle">—</span>
+                      )}
+                    </td>
+                  )}
+
+                  {/* Moneda */}
+                  <td style={{ textAlign: 'center' }}>
+                    <span translate="no" className={`moneda-badge ${moneda === 'USD' ? 'usd' : 'ars'}`}>
+                      {moneda === 'USD' ? '🇺🇸 USD' : '🇦🇷 ARS'}
+                    </span>
+                  </td>
+
+                  {/* Vencimiento */}
+                  <td>
+                    <p className="fecha-pago">{formatDate(d.fecha_vencimiento)}</p>
+                    {mora.tieneMora && (
+                      <p className="fecha-vencida">{mora.diasVencida}d vencida</p>
+                    )}
+                  </td>
+
+                  {/* Estado */}
+                  <td>
+                    <div className={estadoBadgeClass[d.estado] ?? 'status-badge'}>
+                      <span style={{
+                        width: 6, height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: estadoDotColor[d.estado] ?? '#94a3b8',
+                        flexShrink: 0,
+                      }} />
+                      {estadoLabel[d.estado] ?? d.estado}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

@@ -1,44 +1,80 @@
-import { useAuth } from '../../features/auth/context/AuthContext'
-import { useNavigate, Link } from 'react-router-dom'
-import { useTheme } from '../../context/ThemeContext'
+// frontend/src/components/layout/Navbar.tsx
+import { useLocation } from 'react-router-dom'
+import { useExchangeRate } from '../../hooks/useExchangeRate'
+import { NotificationBell } from './NotificationBell'
+import '../../styles/sidebar.css'
 
-export function Navbar() {
-  const { usuario, logout } = useAuth()
-  const navigate = useNavigate()
-  const { theme, toggleTheme } = useTheme()
+interface NavbarProps {
+  collapsed: boolean
+}
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+const pageInfo: Record<string, { title: string; subtitle: string }> = {
+  '/dashboard':      { title: 'Panel',          subtitle: 'Resumen operativo de tu cartera' },
+  '/clientes':       { title: 'Clientes',        subtitle: 'Gestioná tus contactos y su historial' },
+  '/deudas':         { title: 'Deudas',          subtitle: 'Control de deudas activas, vencidas y mora' },
+  '/pagos':          { title: 'Pagos',           subtitle: 'Registro y seguimiento de cobros' },
+  '/analisis':       { title: 'Análisis',        subtitle: 'Tendencias y evolución de tu cartera' },
+  '/perfil':         { title: 'Mi Perfil',       subtitle: 'Datos personales y seguridad' },
+  '/configuracion':  { title: 'Configuración',   subtitle: 'Moneda, mora y preferencias del sistema' },
+}
+
+export function Navbar({ collapsed }: NavbarProps) {
+  const location = useLocation()
+  const { rate, loading: rateLoading } = useExchangeRate()
+
+  const info = pageInfo[location.pathname] ?? { title: 'CobraFlow', subtitle: '' }
 
   return (
-    <nav className="bg-blue-600 dark:bg-gray-900 text-white px-6 py-4 flex justify-between items-center shadow-md fixed top-0 w-full z-50">
-      <div className="flex items-center gap-6">
-        <span className="font-bold text-xl">CobraFlow</span>
-        <Link to="/dashboard" className="hover:text-blue-200 dark:hover:text-gray-300 transition">Panel</Link>
-        <Link to="/clientes" className="hover:text-blue-200 dark:hover:text-gray-300 transition">Clientes</Link>
-        <Link to="/deudas" className="hover:text-blue-200 dark:hover:text-gray-300 transition">Deudas</Link>
-        <Link to="/pagos" className="hover:text-blue-200 dark:hover:text-gray-300 transition">Pagos</Link>
-      </div>
-      <div className="flex items-center gap-4">
-        {/* Botón modo oscuro */}
-        <button
-          onClick={toggleTheme}
-          className="bg-white/20 px-2 py-1 rounded-lg hover:bg-white/30 transition text-sm"
-          aria-label="Cambiar tema"
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
-        <Link to="/perfil" className="text-sm hover:text-blue-200 dark:hover:text-gray-300">
-          {usuario?.nombre} ({usuario?.rol})
-        </Link>
-        <button
-          onClick={handleLogout}
-          className="bg-white text-blue-600 dark:bg-gray-200 dark:text-gray-800 px-3 py-1 rounded hover:bg-blue-50 dark:hover:bg-gray-300 transition text-sm"
-        >
-          Cerrar sesión
-        </button>
+    <nav className={`navbar ${collapsed ? 'collapsed' : ''}`}>
+      {/* Contenedor interno que ocupa toda la altura del navbar */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        width: '100%',
+        height: '100%',
+        padding: '0 24px',
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: '#ffffff', letterSpacing: '-0.3px', margin: 0 }}>
+            {info.title}
+          </h1>
+          {info.subtitle && (
+            <p style={{ fontSize: 11, color: '#6b7280', margin: 0, letterSpacing: '0.01em' }}>
+              {info.subtitle}
+            </p>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {!rateLoading && rate && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 14px',
+              backgroundColor: '#242938',
+              borderRadius: 10,
+              border: '0.5px solid #2e3347',
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: '#94a3b8' }}>USD</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} title="Precio de compra">
+                <span style={{ fontSize: 10, color: '#94a3b8' }}>C:</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#ffffff' }}>
+                  ${rate.compra.toLocaleString('es-AR')}
+                </span>
+              </div>
+              <div style={{ width: 1, height: 14, backgroundColor: '#2e3347' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} title="Precio de venta">
+                <span style={{ fontSize: 10, color: '#94a3b8' }}>V:</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#ffffff' }}>
+                  ${rate.venta.toLocaleString('es-AR')}
+                </span>
+              </div>
+              <div style={{ width: 1, height: 14, backgroundColor: '#2e3347' }} />
+              <span style={{ fontSize: 10, color: '#34d399' }}>● hoy</span>
+            </div>
+          )}
+          <NotificationBell />
+        </div>
       </div>
     </nav>
   )

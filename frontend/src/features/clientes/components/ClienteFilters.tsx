@@ -1,3 +1,6 @@
+// frontend/src/features/clientes/components/ClienteFilters.tsx
+import { IconSearch } from '@tabler/icons-react'
+
 interface ClienteFiltersProps {
   buscar: string
   setBuscar: (value: string) => void
@@ -6,19 +9,41 @@ interface ClienteFiltersProps {
 
 export function ClienteFilters({ buscar, setBuscar, disabled }: ClienteFiltersProps) {
   return (
-    <div className="relative mb-4">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
+    <div style={{ position: 'relative', width: '100%' }}>
+      <IconSearch size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
       <input
         type="text"
-        placeholder="Buscar por nombre o email..."
+        placeholder="Buscar por nombre, DNI o email..."
         value={buscar}
         onChange={(e) => setBuscar(e.target.value)}
-        className="w-full pl-10 pr-4 border border-gray-300 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         disabled={disabled}
+        style={{
+          width: '100%',
+          padding: '10px 16px 10px 40px',
+          backgroundColor: '#242938',
+          border: '0.5px solid #2e3347',
+          borderRadius: '10px',
+          fontSize: '13px',
+          color: '#ffffff',
+          outline: 'none',
+          transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#2a3045'
+          e.currentTarget.style.borderColor = '#1D9E75'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#242938'
+          e.currentTarget.style.borderColor = '#2e3347'
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = '#1D9E75'
+          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(29, 158, 117, 0.2)'
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = '#2e3347'
+          e.currentTarget.style.boxShadow = 'none'
+        }}
       />
     </div>
   )

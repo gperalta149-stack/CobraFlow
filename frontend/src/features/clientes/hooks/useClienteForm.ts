@@ -7,53 +7,72 @@ interface UseClienteFormProps {
   onSuccess: () => void
 }
 
+const initialForm: ClienteFormData = {
+  nombre: '',
+  apellido: '',
+  dni: '',
+  email: '',
+  telefono: '',
+  direccion: '',
+  ciudad: '',
+  provincia: '',
+  empresa: '',
+  observaciones: ''
+}
+
+const sanitizeForm = (f: ClienteFormData) => ({
+  ...f,
+  nombre: f.nombre.trim(),
+  apellido: f.apellido.trim(),
+  dni: f.dni.trim(),
+  email: f.email?.trim() || null,
+  telefono: f.telefono?.trim() || null,
+  direccion: f.direccion?.trim() || null,
+  ciudad: f.ciudad?.trim() || null,
+  provincia: f.provincia?.trim() || null,
+  empresa: f.empresa?.trim() || null,
+  observaciones: f.observaciones?.trim() || null,
+})
+
 export function useClienteForm({ onSuccess }: UseClienteFormProps) {
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState<Cliente | null>(null)
-  const [form, setForm] = useState<ClienteFormData>({
-    nombre: '',
-    email: '',
-    telefono: '',
-    direccion: ''
-  })
+  const [form, setForm] = useState<ClienteFormData>(initialForm)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const nombreInputRef = useRef<HTMLInputElement>(null)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validaciones frontend
+    if (!form.nombre.trim()) return setError('El nombre es requerido')
+    if (!form.apellido.trim()) return setError('El apellido es requerido')
+    if (!form.dni.trim()) return setError('El DNI es requerido')
+    if (form.email && !form.email.includes('@')) return setError('Ingrese un email válido')
+
     setIsSubmitting(true)
-
     try {
-      if (!form.nombre.trim()) {
-        setError('El nombre es requerido')
-        setIsSubmitting(false)
-        return
-      }
-
-      if (form.email && !form.email.includes('@')) {
-        setError('Ingrese un email válido')
-        setIsSubmitting(false)
-        return
-      }
-
+      const data = sanitizeForm(form)
       if (editando) {
-        await clientesApi.update(editando.id, form)
+        await clientesApi.update(editando.id, data)
       } else {
-        await clientesApi.create(form)
+        await clientesApi.create(data)
       }
-
-      setForm({ nombre: '', email: '', telefono: '', direccion: '' })
+      setForm(initialForm)
       setShowForm(false)
       setEditando(null)
       onSuccess()
-    } catch (err) {
-      setError(handleApiError(err, editando ? 'Error al actualizar cliente' : 'Error al crear cliente'))
+    } catch (err: any) {
+      setError(
+        err.response?.data?.error ??
+        handleApiError(err, editando ? 'Error al actualizar cliente' : 'Error al crear cliente')
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -62,10 +81,16 @@ export function useClienteForm({ onSuccess }: UseClienteFormProps) {
   const handleEditar = (cliente: Cliente) => {
     setEditando(cliente)
     setForm({
-      nombre: cliente.nombre,
-      email: cliente.email,
-      telefono: cliente.telefono,
-      direccion: cliente.direccion
+      nombre: cliente.nombre ?? '',
+      apellido: cliente.apellido ?? '',
+      dni: cliente.dni ?? '',
+      email: cliente.email ?? '',
+      telefono: cliente.telefono ?? '',
+      direccion: cliente.direccion ?? '',
+      ciudad: cliente.ciudad ?? '',
+      provincia: cliente.provincia ?? '',
+      empresa: cliente.empresa ?? '',
+      observaciones: cliente.observaciones ?? ''
     })
     setShowForm(true)
     setError('')
@@ -75,7 +100,7 @@ export function useClienteForm({ onSuccess }: UseClienteFormProps) {
   const handleNuevoCliente = () => {
     setShowForm(true)
     setEditando(null)
-    setForm({ nombre: '', email: '', telefono: '', direccion: '' })
+    setForm(initialForm)
     setError('')
     setTimeout(() => nombreInputRef.current?.focus(), 100)
   }
@@ -83,7 +108,7 @@ export function useClienteForm({ onSuccess }: UseClienteFormProps) {
   const handleCancel = () => {
     setShowForm(false)
     setEditando(null)
-    setForm({ nombre: '', email: '', telefono: '', direccion: '' })
+    setForm(initialForm)
     setError('')
   }
 

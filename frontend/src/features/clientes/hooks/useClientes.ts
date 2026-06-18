@@ -1,64 +1,141 @@
+// frontend/src/features/clientes/hooks/useClientes.ts
 import { useState, useEffect, useCallback } from 'react'
 import { clientesApi } from '../services/clientesApi'
+import { deudasApi } from '../../deudas/services/deudasApi'
 import { handleApiError } from '../../../utils/handleApiError'
 import type { Cliente } from '../types'
 
-export function useClientes() {
-  const [clientes, setClientes] = useState<Cliente[]>([])
+// Tipo extendido para Cliente con estadoDeuda
+export interface ClienteConEstado extends Cliente {
+  estadoDeuda: 'pendiente' | 'parcial' | 'vencida' | 'pagada' | null
+}
+
+export type TipoClientes = 'activos' | 'archivados'
+
+interface UseClientesProps {
+  tipo?: TipoClientes
+  buscar?: string
+}
+
+export function useClientes({ tipo = 'activos', buscar: buscarExterno = '' }: UseClientesProps = {}) {
+  const [clientes, setClientes] = useState<ClienteConEstado[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [buscar, setBuscar] = useState('')
-  
-  // Estados para paginación (HU-42)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalItems, setTotalItems] = useState(0)
-  const itemsPerPage = 10
+  const [buscar, setBuscar] = useState(buscarExterno)
+  const [totalClientes, setTotalClientes] = useState(0)
+  const [clientesConDeuda, setClientesConDeuda] = useState(0)
+  const [clientesAlDia, setClientesAlDia] = useState(0)
 
   const fetchClientes = useCallback(async () => {
-    try {
-      const { data, headers } = await clientesApi.getAll(buscar, currentPage, itemsPerPage)
-      setClientes(data)
-      const total = parseInt(headers['x-total-count'] || '0')
-      setTotalItems(total)
-      setTotalPages(Math.ceil(total / itemsPerPage))
-    } catch (err) {
-      const errorMsg = handleApiError(err, 'Error al cargar clientes')
-      console.error(errorMsg)
-      throw err
-    }
-  }, [buscar, currentPage])
-
-  const loadData = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      await fetchClientes()
+      // Obtener clientes según el tipo (activos o archivados)
+      const response = tipo === 'activos'
+        ? await clientesApi.getAll(buscar)
+        : await clientesApi.getArchivados(buscar)
+      
+      const clientesData = response.data
+      setTotalClientes(clientesData.length)
+
+      // Solo calcular estados si es 'activos' (para archivados no es necesario)
+      if (tipo === 'activos') {
+        // Obtener todas las deudas
+        const deudasRes = await deudasApi.getAll()
+        const deudas = deudasRes.data || []
+        
+        // Mapear el estado de deuda por cliente
+        const estadoPorCliente = new Map<string, 'pendiente' | 'parcial' | 'vencida' | 'pagada' | null>()
+        const clientesConDeudaSet = new Set<string>()
+        
+        // Agrupar deudas por cliente
+        const deudasPorCliente = new Map<string, Array<{ estado: string; saldo_pendiente: number }>>()
+        
+        deudas.forEach(deuda => {
+          if (!deudasPorCliente.has(deuda.cliente_id)) {
+            deudasPorCliente.set(deuda.cliente_id, [])
+          }
+          deudasPorCliente.get(deuda.cliente_id)!.push({
+            estado: deuda.estado,
+            saldo_pendiente: deuda.saldo_pendiente
+          })
+        })
+        
+        // Determinar estado para cada cliente
+        deudasPorCliente.forEach((deudasCliente, clienteId) => {
+          let tieneVencida = false
+          let tienePendiente = false
+          let tieneParcial = false
+          let tienePagada = false
+          
+          deudasCliente.forEach(deuda => {
+            if (deuda.estado === 'vencida') tieneVencida = true
+            if (deuda.estado === 'pendiente') tienePendiente = true
+            if (deuda.estado === 'parcial') tieneParcial = true
+            if (deuda.estado === 'pagada') tienePagada = true
+          })
+          
+          // Determinar el estado principal
+          let estado: 'pendiente' | 'parcial' | 'vencida' | 'pagada' | null = null
+          
+          if (tieneVencida) {
+            estado = 'vencida'
+            clientesConDeudaSet.add(clienteId)
+          } else if (tienePendiente) {
+            estado = 'pendiente'
+            clientesConDeudaSet.add(clienteId)
+          } else if (tieneParcial) {
+            estado = 'parcial'
+            clientesConDeudaSet.add(clienteId)
+          } else if (tienePagada) {
+            estado = 'pagada'
+          } else {
+            estado = null
+          }
+          
+          estadoPorCliente.set(clienteId, estado)
+        })
+        
+        // Agregar estadoDeuda a cada cliente
+        const clientesConEstado: ClienteConEstado[] = clientesData.map(cliente => ({
+          ...cliente,
+          estadoDeuda: estadoPorCliente.get(cliente.id) || null
+        }))
+        
+        setClientes(clientesConEstado)
+        setClientesConDeuda(clientesConDeudaSet.size)
+        setClientesAlDia(clientesConEstado.filter(c => 
+          c.estadoDeuda === 'pagada' || c.estadoDeuda === null
+        ).length)
+      } else {
+        // Para archivados, solo mapeamos sin calcular estado
+        const clientesMapeados: ClienteConEstado[] = clientesData.map(cliente => ({
+          ...cliente,
+          estadoDeuda: null
+        }))
+        setClientes(clientesMapeados)
+        setClientesConDeuda(0)
+        setClientesAlDia(0)
+      }
+      
     } catch (err) {
-      setError(handleApiError(err, 'Error al cargar los datos'))
+      setError(handleApiError(err, `Error al cargar clientes ${tipo === 'activos' ? 'activos' : 'archivados'}`))
     } finally {
       setLoading(false)
     }
-  }, [fetchClientes])
+  }, [buscar, tipo])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  const refetchClientes = useCallback(async () => {
-    setLoading(true)
-    try {
-      await fetchClientes()
-    } catch (err) {
-      setError(handleApiError(err, 'Error al recargar los clientes'))
-    } finally {
-      setLoading(false)
-    }
+    fetchClientes()
   }, [fetchClientes])
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page)
-  }
+  const refetchClientes = useCallback(() => {
+    fetchClientes()
+  }, [fetchClientes])
+
+  const loadData = useCallback(() => {
+    fetchClientes()
+  }, [fetchClientes])
 
   return {
     clientes,
@@ -68,12 +145,8 @@ export function useClientes() {
     setBuscar,
     refetchClientes,
     loadData,
-    pagination: {
-      currentPage,
-      totalPages,
-      totalItems,
-      itemsPerPage,
-      goToPage
-    }
+    totalClientes,
+    clientesConDeuda,
+    clientesAlDia,
   }
 }
