@@ -1,19 +1,15 @@
+// frontend/src/features/home/components/Testimonial.tsx
 export function Testimonial() {
   return (
-    <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-      <div className="max-w-4xl mx-auto text-center px-6">
-        <div className="text-6xl mb-4 opacity-50">“</div>
-        <p className="text-xl md:text-2xl font-medium mb-6 italic">
-          CobraFlow me cambió la forma de cobrar. Antes perdía horas con planillas, ahora todo está automatizado.
+    <div style={{ margin: '0 48px' }}>
+      <div style={{ background: '#1a1d2e', border: '0.5px solid #2e3347', borderRadius: 14, padding: '36px', textAlign: 'center' }}>
+        <div style={{ color: '#EF9F27', fontSize: 16, marginBottom: 16 }}>★★★★★</div>
+        <p style={{ fontSize: 15, color: '#c8cdd6', lineHeight: 1.7, fontStyle: 'italic', maxWidth: 520, margin: '0 auto 20px' }}>
+          "CobraFlow me cambió la forma de cobrar. Antes perdía horas con planillas, ahora todo está automatizado y no se me escapa ningún vencimiento."
         </p>
-        <div className="flex justify-center gap-1 mb-3">
-          {[1, 2, 3, 4, 5].map((_, i) => (
-            <span key={i} className="text-yellow-300 text-xl">★</span>
-          ))}
-        </div>
-        <p className="font-semibold">Carlos M.</p>
-        <p className="text-blue-200 text-sm">Comercio minorista</p>
+        <p style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>Carlos M.</p>
+        <p style={{ fontSize: 12, color: '#6b7280', marginTop: 3 }}>Comercio minorista</p>
       </div>
-    </section>
+    </div>
   )
 }

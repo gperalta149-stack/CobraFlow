@@ -1,6 +1,7 @@
 export interface Usuario {
   id: string
   nombre: string
+  apellido: string      // ← AGREGAR
   email: string
   rol: string
 }
@@ -12,6 +13,7 @@ export interface LoginForm {
 
 export interface RegisterForm {
   nombre: string
+  apellido: string      // ← AGREGAR
   email: string
   password: string
 }

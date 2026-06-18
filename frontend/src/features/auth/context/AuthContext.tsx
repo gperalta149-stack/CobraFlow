@@ -1,8 +1,10 @@
+// frontend/src/features/auth/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
 interface Usuario {
   id: string
   nombre: string
+  apellido: string
   email: string
   rol: string
 }
@@ -29,8 +31,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUsuario = localStorage.getItem('usuario')
 
       if (storedToken && storedUsuario) {
-        setToken(storedToken)
-        setUsuario(JSON.parse(storedUsuario))
+        // Verificar que el token no esté expirado antes de setearlo
+        try {
+          const payload = JSON.parse(atob(storedToken.split('.')[1]))
+          const expirado = payload.exp && payload.exp * 1000 < Date.now()
+          
+          if (expirado) {
+            // Token expirado → limpiar
+            localStorage.removeItem('token')
+            localStorage.removeItem('usuario')
+          } else {
+            // Token válido → setear sesión
+            setToken(storedToken)
+            setUsuario(JSON.parse(storedUsuario))
+          }
+        } catch {
+          // Token malformado → limpiar
+          localStorage.removeItem('token')
+          localStorage.removeItem('usuario')
+        }
       }
     } catch (error) {
       console.error('Error cargando sesión:', error)

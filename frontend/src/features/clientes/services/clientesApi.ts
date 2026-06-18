@@ -4,40 +4,67 @@ import type { Cliente, ClienteFormData } from '../types'
 export const clientesApi = {
   getAll: (buscar?: string, page?: number, limit?: number) => {
     const params = new URLSearchParams()
-
     if (buscar) params.append('buscar', buscar)
-
     if (page && limit) {
       params.append('page', page.toString())
       params.append('limit', limit.toString())
     }
-
     const url = `/clientes${params.toString() ? `?${params.toString()}` : ''}`
-
     return api.get<Cliente[]>(url)
   },
 
-  getById: (id: string) =>
-    api.get<Cliente>(`/clientes/${id}`),
+  // NUEVO: Obtener clientes archivados
+  getArchivados: (buscar?: string, page?: number, limit?: number) => {
+    const params = new URLSearchParams()
+    if (buscar) params.append('buscar', buscar)
+    if (page && limit) {
+      params.append('page', page.toString())
+      params.append('limit', limit.toString())
+    }
+    const url = `/clientes/archivados${params.toString() ? `?${params.toString()}` : ''}`
+    return api.get<Cliente[]>(url)
+  },
 
-  create: (data: ClienteFormData) => 
-    api.post('/clientes', {
-      nombre: data.nombre.trim(),
-      email: data.email.trim() || null,
-      telefono: data.telefono.trim() || null,
-      direccion: data.direccion.trim() || null
-    }),
+  getById: (id: string) => api.get<Cliente>(`/clientes/${id}`),
 
-  update: (id: string, data: ClienteFormData) => 
+  create: (data: ClienteFormData) => {
+    console.log('📤 Enviando datos:', data)
+    return api.post('/clientes', {
+      nombre: data.nombre?.trim(),
+      apellido: data.apellido?.trim(),
+      dni: data.dni?.trim(),
+      email: data.email?.trim() || null,
+      telefono: data.telefono?.trim() || null,
+      direccion: data.direccion?.trim() || null,
+      ciudad: data.ciudad?.trim() || null,
+      provincia: data.provincia?.trim() || null,
+      empresa: data.empresa?.trim() || null,
+      observaciones: data.observaciones?.trim() || null
+    })
+  },
+
+  update: (id: string, data: ClienteFormData) =>
     api.put(`/clientes/${id}`, {
-      nombre: data.nombre.trim(),
-      email: data.email.trim() || null,
-      telefono: data.telefono.trim() || null,
-      direccion: data.direccion.trim() || null
+      nombre: data.nombre?.trim(),
+      apellido: data.apellido?.trim(),
+      dni: data.dni?.trim(),
+      email: data.email?.trim() || null,
+      telefono: data.telefono?.trim() || null,
+      direccion: data.direccion?.trim() || null,
+      ciudad: data.ciudad?.trim() || null,
+      provincia: data.provincia?.trim() || null,
+      empresa: data.empresa?.trim() || null,
+      observaciones: data.observaciones?.trim() || null
     }),
 
-  delete: (id: string) => 
-    api.delete(`/clientes/${id}`),
+  // NUEVO: Archivar cliente (soft delete)
+  archivar: (id: string) => api.post(`/clientes/${id}/archivar`),
+
+  // NUEVO: Restaurar cliente archivado
+  restaurar: (id: string) => api.post(`/clientes/${id}/restaurar`),
+
+  // ❌ ELIMINAR este método (ya no se usa)
+  // delete: (id: string) => api.delete(`/clientes/${id}`),
 
   exportToExcel: (buscar?: string) => 
     api.get(`/clientes/export/excel${buscar ? `?buscar=${buscar}` : ''}`, {
@@ -50,14 +77,11 @@ export const clientesApi = {
   getResumenFinanciero: (clienteId: string) => 
     api.get(`/clientes/${clienteId}/resumen-financiero`),
 
-    importCsv: (file: File) => {
+  importCsv: (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
-
     return api.post('/clientes/import/csv', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
-  },
+  }
 }

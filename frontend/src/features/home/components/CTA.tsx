@@ -1,22 +1,23 @@
-import { Link } from 'react-router-dom'
+// frontend/src/features/home/components/CTA.tsx
+import { useNavigate } from 'react-router-dom'
+import { IconRocket } from '@tabler/icons-react'
 
 export function CTA() {
+  const navigate = useNavigate()
   return (
-    <section className="py-24 text-center px-6 bg-gradient-to-r from-blue-50 to-indigo-50">
-      <h2 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
-        Dejá de perder dinero por desorden
-      </h2>
-      <p className="text-xl text-gray-500 mb-10 animate-fade-in animation-delay-100">
-        Sin costos ocultos. Sin complicaciones.
-      </p>
-
-      <Link
-        to="/register"
-        className="inline-block bg-blue-600 text-white px-10 py-4 rounded-xl text-lg md:text-xl font-semibold hover:bg-blue-700 transition transform hover:scale-105 active:scale-95 shadow-lg animate-fade-in animation-delay-200"
-        aria-label="Crear cuenta gratis"
-      >
-        🚀 Crear cuenta gratis
-      </Link>
+    <section style={{ padding: '64px 48px', textAlign: 'center' }}>
+      <div style={{ background: '#1a1d2e', border: '0.5px solid rgba(29,158,117,0.3)', borderRadius: 16, padding: '48px', maxWidth: 520, margin: '0 auto' }}>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f0f2f5', marginBottom: 10, letterSpacing: '-0.3px' }}>
+          Dejá de perder dinero por desorden
+        </h2>
+        <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28 }}>Sin costos ocultos. Sin complicaciones. Empezá hoy.</p>
+        <button
+          onClick={() => navigate('/register')}
+          style={{ padding: '12px 28px', fontSize: 13, fontWeight: 600, background: '#1D9E75', color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+        >
+          <IconRocket size={15} /> Crear cuenta gratis
+        </button>
+      </div>
     </section>
   )
 }

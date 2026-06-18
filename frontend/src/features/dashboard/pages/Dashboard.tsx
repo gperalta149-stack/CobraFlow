@@ -1,37 +1,37 @@
 import { useDashboard } from '../hooks/useDashboard'
 import { StatsCards } from '../components/StatsCards'
-import { TopClientesChart } from '../components/TopClientesChart'
 import { AlertasList } from '../components/AlertasList'
-import { DeudasPorEstadoChart } from '../components/DeudasPorEstadoChart'  // NUEVO
-import { EvolucionPagosChart } from '../components/EvolucionPagosChart'    // NUEVO
-import { ComparativaChart } from '../components/ComparativaChart'          // NUEVO
+import { UltimosPagos } from '../components/UltimosPagos'
+import { TopClientesChart } from '../components/TopClientesChart'
+import { ClienteMayorRiesgoCard } from '../components/ActionCards'
 
 export default function Dashboard() {
-  const { 
-    kpis, 
-    topClientes, 
-    alertas, 
-    loading, 
-    error, 
-    maxSaldo, 
-    collectionRate, 
-    pendingPercentage,
-    deudasPorEstadoData,      // NUEVO
-    evolucionPagos,           // NUEVO
-    comparativaData           // NUEVO
+  const {
+    kpis,
+    alertas,
+    deudasVencidas,
+    ultimosPagos,
+    topClientes,
+    clienteMayorRiesgo,
+    loading,
+    error,
   } = useDashboard()
+
+  const maxSaldo = topClientes.length > 0
+    ? Math.max(...topClientes.map(c => c.saldo_pendiente_usd))
+    : 0
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-8"></div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
-              <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
-              <div className="h-8 w-32 bg-gray-200 rounded"></div>
-            </div>
+      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} style={{ background: '#242938', borderRadius: 12, height: 110, opacity: 0.5 }} />
           ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ background: '#242938', borderRadius: 12, height: 400, opacity: 0.5 }} />
+          <div style={{ background: '#242938', borderRadius: 12, height: 400, opacity: 0.5 }} />
         </div>
       </div>
     )
@@ -39,11 +39,14 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="font-semibold text-lg text-red-600">Error al cargar el dashboard</p>
-          <p className="text-sm text-red-500 mt-2">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ background: '#242938', border: '0.5px solid #E24B4A40', borderRadius: 12, padding: 32, textAlign: 'center', maxWidth: 360 }}>
+          <p style={{ fontWeight: 600, color: '#E24B4A', marginBottom: 8 }}>Error al cargar el panel</p>
+          <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ background: '#E24B4A', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}
+          >
             Reintentar
           </button>
         </div>
@@ -52,38 +55,32 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Panel de Control</h1>
-        {kpis && (
-          <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-            <span className="text-xs text-gray-500">Recuperado</span>
-            <span className="ml-2 text-lg font-bold text-green-600">{collectionRate.toFixed(1)}%</span>
-          </div>
-        )}
+    /* CAMBIO AQUÍ: Se cambió 'height' por 'minHeight' para que el contenedor crezca con las tarjetas */
+    <div style={{ minHeight: 'calc(100vh - 70px)', padding: '24px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+
+        {/* Fila 1: 4 cards métricas */}
+        <StatsCards kpis={kpis} />
+
+        {/* Fila 2: Últimos pagos (2/3) + Mayor riesgo (1/3) */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '2fr 1fr',
+          gap: 12,
+          marginBottom: 12,
+          alignItems: 'stretch',
+        }}>
+          <UltimosPagos pagos={ultimosPagos} />
+          <ClienteMayorRiesgoCard cliente={clienteMayorRiesgo} />
+        </div>
+
+        {/* Fila 3: Top clientes + Atención inmediata */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
+          <TopClientesChart clientes={topClientes} maxSaldo={maxSaldo} />
+          <AlertasList alertas={alertas} deudasVencidas={deudasVencidas} />
+        </div>
+
       </div>
-
-      {/* KPIs principales */}
-      <StatsCards kpis={kpis} collectionRate={collectionRate} pendingPercentage={pendingPercentage} />
-
-      {/* FILA 1: Gráficos principales */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <DeudasPorEstadoChart data={deudasPorEstadoData} />      {/* HU-35 */}
-        <EvolucionPagosChart data={evolucionPagos} />            {/* HU-36 */}
-      </div>
-
-      {/* FILA 2: Comparativa y Top clientes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <ComparativaChart data={comparativaData} />               {/* HU-37 */}
-        <TopClientesChart clientes={topClientes} maxSaldo={maxSaldo} />  {/* HU-38 */}
-      </div>
-
-      {/* FILA 3: Alertas de vencimiento */}
-      <div className="grid grid-cols-1 gap-6">
-        <AlertasList alertas={alertas} />
-      </div>
-
-      <div className="mt-6 text-center text-xs text-gray-400">Datos actualizados en tiempo real</div>
     </div>
   )
 }

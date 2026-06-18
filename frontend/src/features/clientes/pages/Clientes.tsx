@@ -1,38 +1,63 @@
-import { useState } from 'react'
-import { useClientes } from '../hooks/useClientes'
-import { useClienteForm } from '../hooks/useClienteForm'
-import { useClienteDelete } from '../hooks/useClienteDelete'
-import { ClienteFilters } from '../components/ClienteFilters'
+// frontend/src/features/clientes/pages/Clientes.tsx
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { Button } from '../../../components/ui/Button'
+import { EmptyState } from '../../../components/shared/EmptyState'
+import { SlidePanel } from '../../../components/shared/SlidePanel'
+import { PaginationBar } from '../../../components/shared/PaginationBar'
+import { SearchInput } from '../../../components/ui/SearchInput'
+import { ConfirmModal } from '../../../components/shared/ConfirmModal'
 import { ClienteForm } from '../components/ClienteForm'
 import { ClientesTable } from '../components/ClientesTable'
-import { EmptyState } from '../../../components/shared/EmptyState'
-import { ClienteDetailModal } from '../components/ClienteDetailModal'
-import { ClienteHistorialPagos } from '../components/ClienteHistorialPagos'
-import { ClienteResumenFinanciero } from '../components/ClienteResumenFinanciero'
-import { ClienteImportModal } from '../components/ClienteImportModal'
+import { ClientesActions } from '../components/ClientesActions'
+import { ClientesMetrics } from '../components/ClientesMetrics'
+import { ClientesTabs } from '../components/ClientesTabs'
+import { ClienteHistorialPagos } from '../components/modals/ClienteHistorialPagosModal'
+import { ClienteImportModal } from '../components/modals/ClienteImportModal'
+import { ClienteModal } from '../components/modals/ClienteModal'
+import { useClienteArchive } from '../hooks/useClienteArchive'
+import { useClienteForm } from '../hooks/useClienteForm'
+import { useClientes, type ClienteConEstado } from '../hooks/useClientes'
 import { clientesApi } from '../services/clientesApi'
-import { Users } from 'lucide-react'
-import type { Cliente } from '../types'
+import { IconUsers, IconPlus } from '@tabler/icons-react'
+import '../../../styles/theme.css'
+
+type TabType = 'activos' | 'archivados'
 
 export default function Clientes() {
-  // Estados existentes
-  const { clientes, loading, error, buscar, setBuscar, refetchClientes, loadData } = useClientes()
-  const { 
-    showForm, editando, form, error: formError, isSubmitting, nombreInputRef,
-    handleChange, handleSubmit, handleEditar, handleNuevoCliente, handleCancel 
-  } = useClienteForm({ onSuccess: refetchClientes })
-  const { deletingId, handleEliminar } = useClienteDelete({ onSuccess: refetchClientes })
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState<TabType>('activos')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+  
+  const activos = useClientes({ tipo: 'activos' })
+  const archivados = useClientes({ tipo: 'archivados' })
 
-  // NUEVOS ESTADOS para las funcionalidades
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null)
-  const [clienteHistorialPagos, setClienteHistorialPagos] = useState<Cliente | null>(null)
-  const [clienteResumen, setClienteResumen] = useState<Cliente | null>(null)
+  const { showForm, editando, form, error: formError, isSubmitting, nombreInputRef, handleChange, handleSubmit, handleEditar, handleNuevoCliente, handleCancel } = useClienteForm({ 
+    onSuccess: () => {
+      activos.refetchClientes()
+      archivados.refetchClientes()
+    }
+  })
+
+  const { archivingId, confirmState, handleArchivar, handleRestaurar, confirmAccion, cancelAccion } = useClienteArchive({ 
+    onSuccess: () => {
+      activos.refetchClientes()
+      archivados.refetchClientes()
+    }
+  })
+
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteConEstado | null>(null)
+  const [clienteHistorialPagos, setClienteHistorialPagos] = useState<ClienteConEstado | null>(null)
   const [showImportModal, setShowImportModal] = useState(false)
 
-  // NUEVA FUNCIÓN: Exportar a Excel
+  useEffect(() => {
+    if (showForm) handleCancel()
+  }, [location.state?.reset])
+
   const handleExport = async () => {
     try {
-      const response = await clientesApi.exportToExcel(buscar)
+      const response = await clientesApi.exportToExcel(activos.buscar)
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
@@ -41,145 +66,149 @@ export default function Clientes() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       alert('Error al exportar clientes')
     }
   }
 
-  // NUEVAS FUNCIONES para los modales
-  const handleVerDetalle = (cliente: Cliente) => {
-    setClienteSeleccionado(cliente)
+  const isLoading = activeTab === 'activos' ? activos.loading : archivados.loading
+  const currentClientes = activeTab === 'activos' ? activos.clientes : archivados.clientes
+  const currentBuscar = activeTab === 'activos' ? activos.buscar : archivados.buscar
+  const setCurrentBuscar = activeTab === 'activos' ? activos.setBuscar : archivados.setBuscar
+  const currentError = activeTab === 'activos' ? activos.error : archivados.error
+  const loadCurrentData = activeTab === 'activos' ? activos.loadData : archivados.loadData
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab, currentBuscar])
+
+  const totalItems = currentClientes.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const clientesPaginados = currentClientes.slice(startIndex, endIndex)
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
   }
 
-  const handleVerPagos = (cliente: Cliente) => {
-    setClienteHistorialPagos(cliente)
-  }
+  const clientesMorosos = activos.clientes.filter(c => c.estadoDeuda === 'vencida').length
 
-  const handleVerResumen = (cliente: Cliente) => {
-    setClienteResumen(cliente)
-  }
-
-  // Estados de carga y error (existentes, sin cambios)
-  if (loading && clientes.length === 0) {
+  if (isLoading && currentClientes.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
-            <div className="bg-gray-200 h-10 w-32 rounded animate-pulse"></div>
+      <div className="dark-container">
+        <div className="animate-pulse space-y-4">
+          <div className="flex justify-end gap-3 mb-6">
+            <div className="h-9 w-28 bg-[#242938] rounded-lg" />
+            <div className="h-9 w-28 bg-[#242938] rounded-lg" />
+            <div className="h-9 w-32 bg-[#242938] rounded-lg" />
           </div>
-          <div className="animate-pulse space-y-4">
-            <div className="h-10 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="grid grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-24 bg-[#242938] rounded-xl" />)}
           </div>
+          <div className="h-10 bg-[#242938] rounded-lg" />
+          <div className="h-96 bg-[#242938] rounded-xl" />
         </div>
       </div>
     )
   }
 
-  if (error && clientes.length === 0) {
+  if (currentError && currentClientes.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100">
-        <div className="p-6">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-            <div className="text-red-600">
-              <p className="font-semibold text-lg">Error al cargar los datos</p>
-              <p className="text-sm mt-2">{error}</p>
-              <button onClick={loadData} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">Reintentar</button>
-            </div>
-          </div>
+      <div className="dark-container">
+        <div className="bg-red-900/30 border border-red-500 rounded-xl p-8 text-center">
+          <p className="font-semibold text-red-400 text-lg mb-2">Error al cargar los datos</p>
+          <p className="text-sm text-gray-400 mb-4">{currentError}</p>
+          <button onClick={loadCurrentData} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Reintentar</button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="p-6">
-        {/* HEADER CON BOTONES MEJORADOS */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
-          <div className="flex flex-wrap gap-2">
-            {/* Botón Importar - NUEVO */}
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
-            >
-              📥 Importar Excel
-            </button>
-            {/* Botón Exportar - NUEVO */}
-            <button
-              onClick={handleExport}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-            >
-              📊 Exportar Excel
-            </button>
-            {/* Botón Nuevo Cliente - Existente */}
-            <button
-              onClick={handleNuevoCliente}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-            >
-              + Nuevo Cliente
-            </button>
-          </div>
+    <div className="dark-container">
+      <ClientesActions 
+        onImport={() => setShowImportModal(true)} 
+        onExport={handleExport} 
+        onNuevo={handleNuevoCliente} 
+      />
+
+      <ClientesMetrics 
+        totalClientes={activos.totalClientes}
+        clientesConDeuda={activos.clientesConDeuda}
+        clientesMorosos={clientesMorosos}
+        clientesAlDia={activos.clientesAlDia}
+        totalArchivados={archivados.totalClientes}
+      />
+
+      <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+        <ClientesTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="w-full max-w-md">
+          <SearchInput 
+            value={currentBuscar} 
+            onChange={setCurrentBuscar} 
+            placeholder="Buscar por nombre, DNI o email..."
+            disabled={isLoading}
+          />
         </div>
-
-        {/* Filtros - Existente */}
-        <ClienteFilters buscar={buscar} setBuscar={setBuscar} disabled={loading} />
-
-        {/* Formulario - Existente */}
-        {showForm && (
-          <ClienteForm
-            form={form}
-            editando={editando}
-            error={formError}
-            isSubmitting={isSubmitting}
-            nombreInputRef={nombreInputRef}
-            onChange={handleChange}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        )}
-
-        {/* Tabla o EmptyState - MODIFICADO: agregar nuevas props */}
-        {clientes.length === 0 && !loading ? (
-          <EmptyState
-            title="No hay clientes"
-            description="Creá tu primer cliente para comenzar"
-            icon={<Users />}
-            action={
-              <button
-                onClick={handleNuevoCliente}
-                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
-              >
-                + Crear primer cliente
-              </button>
-            }
-          />
-        ) : (
-          <ClientesTable
-            clientes={clientes}
-            onVer={handleVerDetalle}           // NUEVO
-            onEditar={handleEditar}             // Existente
-            onVerPagos={handleVerPagos}         // NUEVO
-            onVerResumen={handleVerResumen}     // NUEVO
-            onEliminar={handleEliminar}         // Existente
-            deletingId={deletingId}             // Existente
-          />
-        )}
       </div>
 
-      {/* MODALES NUEVOS */}
-
-      {/* Modal de detalle de cliente */}
-      {clienteSeleccionado && (
-        <ClienteDetailModal
-          clienteId={clienteSeleccionado.id}
-          onClose={() => setClienteSeleccionado(null)}
+      {clientesPaginados.length === 0 && !isLoading ? (
+        <EmptyState
+          title={activeTab === 'activos' ? "No hay clientes" : "No hay clientes archivados"}
+          description={activeTab === 'activos' ? "Creá tu primer cliente para comenzar" : "Los clientes que archives aparecerán aquí"}
+          icon={<IconUsers size={40} />}
+          action={activeTab === 'activos' ? (
+            <Button variant="dark-primary" onClick={handleNuevoCliente}>
+              <IconPlus size={16} /> Crear primer cliente
+            </Button>
+          ) : undefined}
         />
+      ) : (
+        <>
+          <ClientesTable
+            clientes={clientesPaginados}
+            onVer={setClienteSeleccionado}
+            onEditar={handleEditar}
+            onArchivar={handleArchivar}
+            onRestaurar={handleRestaurar}
+            archivingId={archivingId}
+            esArchivados={activeTab === 'archivados'}
+          />
+          <PaginationBar
+  totalItems={totalItems}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            onPageChange={goToPage}
+            itemLabel="cliente"
+          />
+        </>
       )}
 
-      {/* Modal de historial de pagos */}
+      {/* SlidePanel con título sin emoji */}
+      <SlidePanel isOpen={showForm} onClose={handleCancel} title={editando ? 'Editar cliente' : 'Nuevo cliente'}>
+        <ClienteForm form={form} editando={editando} error={formError} isSubmitting={isSubmitting} nombreInputRef={nombreInputRef} onChange={handleChange} onSubmit={handleSubmit} onCancel={handleCancel} />
+      </SlidePanel>
+
+      <ConfirmModal
+        isOpen={confirmState !== null}
+        title={confirmState?.accion === 'archivar' ? '¿Archivar cliente?' : '¿Restaurar cliente?'}
+        message={`${confirmState?.clienteNombre}\n\n${
+          confirmState?.accion === 'archivar'
+            ? 'El cliente se archivará y no aparecerá en la lista principal. Podés restaurarlo desde la sección "Archivados" en cualquier momento.'
+            : 'El cliente volverá a aparecer en la lista principal con todos sus datos y su historial.'
+        }`}
+        confirmText={confirmState?.accion === 'archivar' ? 'Sí, archivar' : 'Sí, restaurar'}
+        cancelText="Cancelar"
+        onConfirm={confirmAccion}
+        onCancel={cancelAccion}
+        variant={confirmState?.accion === 'archivar' ? 'archive' : 'restore'}
+      />
+
+      {clienteSeleccionado && (
+        <ClienteModal clienteId={clienteSeleccionado.id} onClose={() => setClienteSeleccionado(null)} />
+      )}
+
       {clienteHistorialPagos && (
         <ClienteHistorialPagos
           clienteId={clienteHistorialPagos.id}
@@ -188,19 +217,13 @@ export default function Clientes() {
         />
       )}
 
-      {/* Modal de resumen financiero */}
-      {clienteResumen && (
-        <ClienteResumenFinanciero
-          clienteId={clienteResumen.id}
-          onClose={() => setClienteResumen(null)}
-        />
-      )}
-
-      {/* Modal de importación */}
       {showImportModal && (
-        <ClienteImportModal
-          onClose={() => setShowImportModal(false)}
-          onSuccess={refetchClientes}
+        <ClienteImportModal 
+          onClose={() => setShowImportModal(false)} 
+          onSuccess={() => { 
+            activos.refetchClientes(); 
+            archivados.refetchClientes(); 
+          }} 
         />
       )}
     </div>

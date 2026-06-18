@@ -1,0 +1,361 @@
+/* frontend/src/styles/theme.css */
+:root {
+  /* Colores base */
+  --bg-dark: #1a1f2e;
+  --bg-card: #242938;
+  --bg-hover: #2a3045;
+  --bg-table-header: #1e2334;
+  --border-dark: #2e3347;
+  --border-hover: #3a4159;
+  
+  /* Textos */
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #6b7280;
+  --text-disabled: #4a5568;
+  
+  /* Estados */
+  --status-pendiente: #EF9F27;
+  --status-parcial: #378ADD;
+  --status-pagada: #1D9E75;
+  --status-vencida: #E24B4A;
+  
+  /* Colores de avatar */
+  --avatar-1: #1D9E75;
+  --avatar-2: #378ADD;
+  --avatar-3: #EF9F27;
+  --avatar-4: #E24B4A;
+  --avatar-5: #8b5cf6;
+  --avatar-6: #ec4899;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TAMAÑOS UNIFICADOS
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --metric-value-size: 22px;
+
+  /* Colores semánticos ARS / USD */
+  --color-ars: #60a5fa;
+  --color-usd: #fbbf24;
+}
+
+/* Contenedor principal */
+.dark-container {
+  background-color: var(--bg-dark);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* Tarjetas */
+.dark-card {
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.dark-card:hover {
+  background-color: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: var(--border-hover);
+}
+
+/* Inputs */
+.dark-input {
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 10px;
+  padding: 10px 16px 10px 40px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.dark-input:focus {
+  border-color: var(--status-pagada);
+  box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.2);
+}
+
+.dark-input:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--status-pagada);
+}
+
+/* Tabla */
+.dark-table {
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dark-table thead tr {
+  background-color: var(--bg-table-header);
+  border-bottom: 0.5px solid var(--border-dark);
+}
+
+.dark-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dark-table td {
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border-dark);
+}
+
+.dark-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.dark-table tbody tr:hover {
+  background-color: var(--bg-hover);
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Botones */
+.btn-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-dark:hover {
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background-color: var(--status-pagada);
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #1a8b68;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(29, 158, 117, 0.4);
+}
+
+/* Badges de estado */
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.badge-estado:hover {
+  transform: scale(1.02);
+}
+
+.badge-pendiente {
+  background-color: #2d2a1e;
+  color: var(--status-pendiente);
+  border: 0.5px solid var(--status-pendiente);
+}
+
+.badge-parcial {
+  background-color: #1e2a3a;
+  color: var(--status-parcial);
+  border: 0.5px solid var(--status-parcial);
+}
+
+.badge-al-dia {
+  background-color: #1a2d26;
+  color: var(--status-pagada);
+  border: 0.5px solid var(--status-pagada);
+}
+
+.badge-vencida {
+  background-color: #2d1e1e;
+  color: var(--status-vencida);
+  border: 0.5px solid var(--status-vencida);
+}
+
+/* Avatar */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+/* Paginación */
+.pagination-btn {
+  padding: 6px 12px;
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.pagination-number {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-number.active {
+  background-color: white;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.pagination-number:not(.active) {
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  color: var(--text-secondary);
+}
+
+.pagination-number:not(.active):hover {
+  background-color: var(--bg-hover);
+  transform: translateY(-2px);
+}
+
+/* Gradiente para botón primary */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--status-pagada) 0%, #1a8b68 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TARJETAS MÉTRICAS — tipografía unificada
+   Usado por: MetricCard, DualMetricCard, StatsCards, KpiCardBimoneda
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.metric-card {
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.metric-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.metric-card-icon {
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+}
+
+.metric-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.metric-value {
+  font-size: var(--metric-value-size);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.metric-value-empty {
+  font-size: var(--metric-value-size);
+  font-weight: 600;
+  color: var(--text-disabled);
+}
+
+.metric-value-dual {
+  font-size: var(--metric-value-size);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.metric-currency-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.metric-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.metric-trend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.metric-trend-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.metric-mini-row { margin-bottom: 8px; }
+.metric-mini-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+.metric-mini-value { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.metric-mini-value .sep { font-size: 11px; color: var(--text-muted); margin: 0 6px; }
+.metric-mini-value .usd { font-size: 12px; color: var(--color-usd); }

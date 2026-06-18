@@ -9,6 +9,7 @@ export function useRegister() {
 
   const [form, setForm] = useState<RegisterForm>({
     nombre: '',
+    apellido: '',      // ← AGREGAR
     email: '',
     password: '',
   })

@@ -1,0 +1,519 @@
+/* frontend/src/styles/table.css */
+@import './theme.css';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ESTRUCTURA BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.table-container {
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 12px;
+}
+
+.table-scroll-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+.dark-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+/* Encabezado */
+.dark-table thead tr {
+  background-color: var(--bg-table-header);
+  border-bottom: 0.5px solid var(--border-dark);
+}
+
+.dark-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 11px;          /* +1: era 10px */
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Celdas */
+.dark-table td {
+  padding: 13px 16px;       /* +1: era 12px */
+  border-bottom: 0.5px solid var(--border-dark);
+  transition: all 0.15s ease-out;
+}
+
+/* Fila hover */
+.dark-table tbody tr {
+  transition: background-color 0.15s ease-out;
+}
+
+.dark-table tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AVATAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.table-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.15s ease-out;
+  flex-shrink: 0;
+}
+
+.table-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGES DE ESTADO
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;          /* +1: era 11px */
+  font-weight: 500;
+  transition: all 0.15s ease-out;
+}
+
+.status-badge:hover { transform: scale(1.02); }
+
+.status-pendiente {
+  background-color: #2d2a1e;
+  color: var(--status-pendiente);
+  border: 0.5px solid var(--status-pendiente);
+}
+
+.status-parcial {
+  background-color: #1e2a3a;
+  color: var(--status-parcial);
+  border: 0.5px solid var(--status-parcial);
+}
+
+.status-al-dia {
+  background-color: #1a2d26;
+  color: var(--status-pagada);
+  border: 0.5px solid var(--status-pagada);
+}
+
+.status-vencida {
+  background-color: #2d1e1e;
+  color: var(--status-vencida);
+  border: 0.5px solid var(--status-vencida);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MENÚ DE ACCIONES (3 puntos + dropdown)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.action-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.action-dots-btn {
+  width: 32px;
+  height: 32px;
+  background-color: var(--bg-hover);
+  border: 0.5px solid var(--border-hover);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s ease-out;
+}
+
+.action-dots-btn:hover {
+  background-color: var(--status-pagada);
+  border-color: var(--status-pagada);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(29, 158, 117, 0.3);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 9999;
+  min-width: 160px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background-color: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.1s ease-out;
+  text-align: left;
+}
+
+.dropdown-item:hover { background-color: var(--bg-hover); }
+
+.dropdown-divider {
+  height: 0.5px;
+  background-color: var(--border-dark);
+  margin: 4px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILAS CON COLOR POR ESTADO
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark-table tbody tr.row-estado-vencida   { background-color: #2d2235; }
+.dark-table tbody tr.row-estado-vencida:hover   { background-color: #332538; }
+
+.dark-table tbody tr.row-estado-pendiente { background-color: #272418; }
+.dark-table tbody tr.row-estado-pendiente:hover { background-color: #2e2b1e; }
+
+.dark-table tbody tr.row-estado-parcial   { background-color: #1a2235; }
+.dark-table tbody tr.row-estado-parcial:hover   { background-color: #1e273d; }
+
+.dark-table tbody tr.row-estado-pagada    { background-color: #192a26; }
+.dark-table tbody tr.row-estado-pagada:hover    { background-color: #1e302b; }
+
+/* Fila con mora */
+.dark-table tbody tr.row-mora       { background-color: rgba(239, 68, 68, 0.04); }
+.dark-table tbody tr.row-mora:hover { background-color: rgba(239, 68, 68, 0.08); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIPOGRAFÍA UNIFICADA DE TABLA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Nombre de cliente/persona — fila principal */
+.table-cell-name {
+  font-size: 14px;          /* +1: era 13px */
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Texto secundario debajo del nombre (ciudad, teléfono, etc.) */
+.table-cell-sub {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Texto terciario (muted: factura, observación) */
+.table-cell-muted {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* Valor ausente */
+.table-cell-empty {
+  font-size: 14px;          /* +1: era 13px */
+  color: var(--text-disabled);
+}
+
+/* Descripción de deuda */
+.deuda-descripcion {
+  display: block;
+  font-size: 14px;          /* +1: era 13px */
+  color: var(--text-secondary);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.factura-numero {
+  display: block;
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* Fechas */
+.fecha-vencida {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--status-vencida);
+  margin-top: 2px;
+}
+
+.fecha-pago {
+  font-size: 14px;          /* +1: era 13px */
+  color: var(--text-secondary);
+}
+
+.pago-observacion {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-muted);
+  margin-top: 2px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MONTOS EN TABLA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Monto principal en tabla — ARS */
+.table-monto-ars {
+  font-size: 14px;          /* +1: era 13px */
+  font-weight: 600;
+  color: var(--color-ars);
+}
+
+/* Monto principal en tabla — USD */
+.table-monto-usd {
+  font-size: 14px;          /* +1: era 13px */
+  font-weight: 600;
+  color: var(--color-usd);
+}
+
+/* Equivalencia debajo del monto */
+.table-monto-eq {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Monto cobrado en pagos (verde, más prominente) */
+.monto-cobrado {
+  font-size: 14px;          /* +1: era 13px */
+  font-weight: 700;
+  color: var(--status-pagada);
+}
+
+.monto-equivalencia {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.monto-valor     { color: var(--text-secondary); }
+.monto-pagado    { color: var(--status-pagada); }
+.monto-pendiente { color: var(--status-vencida); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGES DE MONEDA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.moneda-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;          /* +1: era 11px */
+  font-weight: 600;
+}
+
+.moneda-badge.usd { background-color: rgba(234, 179, 8, 0.12);  color: #facc15; }
+.moneda-badge.ars { background-color: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MORA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark-table th.col-mora { color: #fb923c; }
+
+.mora-label {
+  font-size: 12px;          /* +1: era 11px */
+  font-weight: 700;
+  color: #fb923c;
+  margin-top: 2px;
+}
+
+.mora-detalle {
+  font-size: 12px;          /* +1: era 11px */
+  color: var(--text-muted);
+}
+
+.mora-descripcion {
+  font-size: 12px;          /* +1: era 11px */
+  color: #f97316;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE MÉTODO DE PAGO
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.metodo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;          /* +1: era 12px */
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOTÓN COMPROBANTE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.btn-comprobante {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;          /* +1: era 12px */
+  font-weight: 500;
+  color: var(--status-parcial);
+  background: rgba(55, 138, 221, 0.1);
+  border: 0.5px solid rgba(55, 138, 221, 0.3);
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.btn-comprobante:hover {
+  background: rgba(55, 138, 221, 0.2);
+  border-color: rgba(55, 138, 221, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.table-empty-state {
+  padding: 64px 24px;
+  text-align: center;
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 12px;
+}
+
+.table-empty-state .empty-icon        { font-size: 36px; margin-bottom: 12px; }
+.table-empty-state .empty-title       { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.table-empty-state .empty-description { font-size: 13px; color: var(--text-muted); }
+
+.table-empty-state .empty-action {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--status-pagada);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease-out;
+}
+
+.table-empty-state .empty-action:hover {
+  color: #34d399;
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGINACIÓN
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background-color: var(--bg-card);
+  border: 0.5px solid var(--border-dark);
+  border-radius: 10px;
+}
+
+.pagination-info {
+  font-size: 13px;          /* +1: era 12px */
+  color: var(--text-muted);
+}
+
+.pagination-info strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 13px;          /* +1: era 12px */
+  font-weight: 500;
+  background: transparent;
+  border: 0.5px solid var(--border-dark);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;          /* +1: era 13px */
+  font-weight: 600;
+  background-color: var(--status-pagada);
+  color: white;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARDS MÉTRICAS (DualMetricCard)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLORES SEMÁNTICOS ARS / USD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --color-ars: #60a5fa;   /* celeste */
+  --color-usd: #fbbf24;   /* dorado  */
+}
