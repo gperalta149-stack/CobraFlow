@@ -1,4 +1,5 @@
 // frontend/src/features/perfil/hooks/useDeudasVencidas.ts
+
 import { useState, useEffect } from 'react'
 import { deudasApi } from '../../deudas/services/deudasApi'
 import { calcularMora } from '../../../lib/calcularMora'
@@ -31,12 +32,15 @@ export function useDeudasVencidas(config: MoraConfig) {
         const data = response.data || []
         
         const conMora = data.map((deuda: any) => {
+          // ✅ CORRECCIÓN: pasar 5 argumentos
           const resultado = calcularMora(
-            deuda.saldo_pendiente,
-            deuda.fecha_vencimiento,
-            deuda.estado,
-            config
+            deuda.saldo_pendiente,    // 1: saldoPendiente
+            deuda.fecha_vencimiento,  // 2: fechaVencimiento
+            deuda.estado,             // 3: estado
+            deuda.monto_mora,         // 4: montoMoraAcumulada
+            config                    // 5: config
           )
+          
           return {
             id: deuda.id,
             cliente_nombre: deuda.cliente_nombre || deuda.clientes?.nombre || 'Cliente',

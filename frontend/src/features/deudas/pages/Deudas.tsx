@@ -1,7 +1,14 @@
 // frontend/src/features/deudas/pages/Deudas.tsx
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { IconHistory, IconPlus, IconWallet, IconAlertCircle } from '@tabler/icons-react'
+import { useLocation } from 'react-router-dom'
+import { 
+  IconPlus, 
+  IconWallet, 
+  IconAlertCircle, 
+  IconAdjustmentsHorizontal,
+  IconFileExport,
+  IconTableExport
+} from '@tabler/icons-react'
 import { SlidePanel } from '../../../components/shared/SlidePanel'
 import { SearchInput } from '../../../components/ui/SearchInput'
 import { DeudaMetricCard } from '../components/DeudaMetricCard'
@@ -14,14 +21,14 @@ import { DeudasTable } from '../components/DeudasTable'
 import { DeudaProximoVencimientoCard } from '../components/DeudaProximoVencimientoCard'
 import { useDeudaForm } from '../hooks/useDeudaForm'
 import { useDeudas } from '../hooks/useDeudas'
+import { useExportDeudas } from '../hooks/useExportDeudas'
 import '../../../styles/theme.css'
+import '../../../styles/filter.css'
 
-const ITEMS_PER_PAGE = 10
+const ITEMS_PER_PAGE = 5
 
 export default function Deudas() {
-  const navigate = useNavigate()
   const location = useLocation()
-  const [quickFilter, setQuickFilter] = useState('todos')
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -52,15 +59,13 @@ export default function Deudas() {
     handleSubmit, handleCancel, openForm,
   } = useDeudaForm({ onSuccess: refetchDeudas })
 
-  useEffect(() => { if (showForm) handleCancel() }, [location.state?.reset])
+  const { exportToCSV, exportToPDF } = useExportDeudas()
 
-  useEffect(() => { setCurrentPage(1) }, [quickFilter, searchTerm, filtroEstados, filtroDesde, filtroHasta, filtroMontoMin, filtroMontoMax, filtroMonedaMonto])
+  useEffect(() => { if (showForm) handleCancel() }, [location.state?.reset])
+  useEffect(() => { setCurrentPage(1) }, [searchTerm, filtroEstados, filtroDesde, filtroHasta, filtroMontoMin, filtroMontoMax, filtroMonedaMonto])
 
   const filteredDeudas = useMemo(() => {
     let result = [...deudas]
-    if (quickFilter === 'activas') result = result.filter(d => d.estado === 'pendiente' || d.estado === 'parcial')
-    if (quickFilter === 'vencidas') result = result.filter(d => d.estado === 'vencida')
-    if (quickFilter === 'parciales') result = result.filter(d => d.estado === 'parcial')
     if (searchTerm) {
       const t = searchTerm.toLowerCase()
       result = result.filter(d =>
@@ -70,7 +75,7 @@ export default function Deudas() {
       )
     }
     return result
-  }, [deudas, quickFilter, searchTerm])
+  }, [deudas, searchTerm])
 
   const deudasPaginadas = useMemo(() => {
     return filteredDeudas.slice(
@@ -108,21 +113,27 @@ export default function Deudas() {
   return (
     <div className="dark-container">
 
-      {/* Header */}
+      {/* Header con botones de exportación */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 24 }}>
-        <button onClick={() => navigate('/deudas/historial')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', backgroundColor: '#242938', border: '0.5px solid #2e3347', borderRadius: 8, color: '#94a3b8', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-          <IconHistory size={16} /> Ver historial
+        <button 
+          onClick={() => exportToCSV(deudas, 'deudas')}
+          className="btn-export"
+        >
+          <IconTableExport size={16} /> Excel
         </button>
-        <button onClick={openForm}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', backgroundColor: '#1D9E75', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button 
+          onClick={() => exportToPDF(deudas, 'deudas')}
+          className="btn-export"
+        >
+          <IconFileExport size={16} /> PDF
+        </button>
+        <button onClick={openForm} className="btn-primary">
           <IconPlus size={16} /> Nueva deuda
         </button>
       </div>
 
-      {/* 4 Métricas con DeudaMetricCard (sin equivalencias) */}
+      {/* 4 Métricas con DeudaMetricCard */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-
         <DeudaMetricCard
           label="Total pendiente"
           ars={pendienteARS}
@@ -155,37 +166,50 @@ export default function Deudas() {
           proximoVencimiento={proximoVencimiento}
           cotizacionActual={cotizacionActual}
         />
-
       </div>
 
-      {/* Buscador */}
-      <div style={{ marginBottom: 12 }}>
-        <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Buscar deuda o cliente..." disabled={loading} />
+      {/* === FILTROS CON PANEL (mismo estilo que Pagos) === */}
+      <div className="filter-panel">
+        <div className="filter-icon">
+          <IconAdjustmentsHorizontal size={16} />
+        </div>
+
+        {/* Vista rápida */}
+        <div className="filter-group">
+          <span className="filter-group-label">Vista</span>
+          <DeudaQuickFilters
+            filtroEstados={filtroEstados}
+            setFiltroEstados={setFiltroEstados}
+            counts={counts}
+          />
+        </div>
+
+        <div className="filter-divider" />
+
+        {/* Filtros avanzados */}
+        <div className="filter-group">
+          <span className="filter-group-label">Filtrar</span>
+          <DeudaFilters
+            filtroDesde={filtroDesde} setFiltroDesde={setFiltroDesde}
+            filtroHasta={filtroHasta} setFiltroHasta={setFiltroHasta}
+            filtroMontoMin={filtroMontoMin} setFiltroMontoMin={setFiltroMontoMin}
+            filtroMontoMax={filtroMontoMax} setFiltroMontoMax={setFiltroMontoMax}
+            filtroMonedaMonto={filtroMonedaMonto} setFiltroMonedaMonto={setFiltroMonedaMonto}
+            onLimpiar={limpiarFiltros} disabled={loading}
+          />
+        </div>
+
+        {/* Buscador */}
+        <div className="filter-search">
+          <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Buscar deuda o cliente..." disabled={loading} />
+        </div>
       </div>
-
-      {/* Quick filters */}
-      <DeudaQuickFilters
-        activeFilter={quickFilter}
-        onFilterChange={setQuickFilter}
-        counts={counts}
-      />
-
-      {/* Filtros avanzados */}
-      <DeudaFilters
-        filtroEstados={filtroEstados} setFiltroEstados={setFiltroEstados}
-        filtroDesde={filtroDesde} setFiltroDesde={setFiltroDesde}
-        filtroHasta={filtroHasta} setFiltroHasta={setFiltroHasta}
-        filtroMontoMin={filtroMontoMin} setFiltroMontoMin={setFiltroMontoMin}
-        filtroMontoMax={filtroMontoMax} setFiltroMontoMax={setFiltroMontoMax}
-        filtroMonedaMonto={filtroMonedaMonto} setFiltroMonedaMonto={setFiltroMonedaMonto}
-        onLimpiar={limpiarFiltros} disabled={loading}
-      />
 
       {/* Tabla con datos paginados */}
       <DeudasTable
         deudas={deudasPaginadas}
-        hayFiltrosActivos={hayFiltrosActivos || quickFilter !== 'todos' || searchTerm !== ''}
-        onLimpiarFiltros={() => { limpiarFiltros(); setQuickFilter('todos'); setSearchTerm('') }}
+        hayFiltrosActivos={hayFiltrosActivos || searchTerm !== ''}
+        onLimpiarFiltros={() => { limpiarFiltros(); setSearchTerm('') }}
         cotizacion={cotizacionActual}
       />
 

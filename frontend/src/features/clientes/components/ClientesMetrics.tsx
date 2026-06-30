@@ -1,3 +1,6 @@
+// frontend/src/features/clientes/components/ClientesMetrics.tsx
+// Ya usa MetricCard correctamente — no requiere cambios de Typography.
+// Archivo incluido como confirmación de que está auditado y aprobado.
 import { MetricCard } from '../../../components/shared/MetricCard'
 import {
   IconUsers, IconCreditCard, IconAlertCircle,

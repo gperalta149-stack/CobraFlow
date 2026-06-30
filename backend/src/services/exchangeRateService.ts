@@ -56,56 +56,60 @@ export const fetchBlueExchangeRate = async () => {
   }
 }
 
-// Guardar cotización en BD
+// ============================================
+// GUARDAR COTIZACIÓN (USANDO RPC CON UPSERT)
+// ============================================
 export const saveExchangeRate = async (compra: number, venta: number, fuente: string) => {
   // Asegurar orden correcto: compra MENOR, venta MAYOR
   const compraFinal = Math.min(compra, venta)
   const ventaFinal = Math.max(compra, venta)
   
+  // ✅ Usar la RPC guardar_cotizacion que ya existe en la BD
+  // Esta función hace ON CONFLICT (fecha) DO UPDATE
   const { data, error } = await supabase
-    .from('tipo_cambio')
-    .insert({
-      compra: compraFinal,
-      venta: ventaFinal,
-      fuente,
-      fecha: new Date().toISOString()
+    .rpc('guardar_cotizacion', {
+      p_compra: compraFinal,
+      p_venta: ventaFinal,
+      p_fuente: fuente
     })
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-// Obtener cotización actual desde BD
-export const getCurrentExchangeRate = async () => {
-  const { data, error } = await supabase
-    .from('tipo_cambio')
-    .select('*')
-    .order('fecha', { ascending: false })
-    .limit(1)
     .single()
   
   if (error) {
-    console.error('Error getting current exchange rate:', error)
-    return null
-  }
-  
-  // Asegurar orden correcto al devolver
-  if (data) {
-    return {
-      ...data,
-      compra: Math.min(data.compra, data.venta),
-      venta: Math.max(data.compra, data.venta)
-    }
+    console.error('Error guardando cotización con RPC:', error)
+    throw error
   }
   
   return data
 }
 
-// Actualizar cotización diaria
+// ============================================
+// OBTENER COTIZACIÓN ACTUAL (USANDO RPC)
+// ============================================
+export const getCurrentExchangeRate = async () => {
+  try {
+    // ✅ Usar la RPC obtener_cotizacion_vigente() para consistencia
+    const { data, error } = await supabase
+      .rpc('obtener_cotizacion_vigente')
+      .single()
+    
+    if (error) {
+      console.error('Error getting current exchange rate:', error)
+      return null
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Error inesperado en getCurrentExchangeRate:', error)
+    return null
+  }
+}
+
+// ============================================
+// ACTUALIZAR COTIZACIÓN DIARIA
+// ============================================
 export const updateDailyExchangeRate = async () => {
   try {
+    // Intentar obtener cotización oficial
     const officialRate = await fetchOfficialExchangeRate()
     
     const saved = await saveExchangeRate(
@@ -117,7 +121,28 @@ export const updateDailyExchangeRate = async () => {
     console.log('✅ Cotización diaria actualizada:', saved)
     return saved
   } catch (error) {
-    console.error('Error updating daily exchange rate:', error)
+    console.error('❌ Error updating daily exchange rate:', error)
+    throw error
+  }
+}
+
+// ============================================
+// ACTUALIZAR COTIZACIÓN BLUE (MANUAL)
+// ============================================
+export const updateBlueExchangeRate = async () => {
+  try {
+    const blueRate = await fetchBlueExchangeRate()
+    
+    const saved = await saveExchangeRate(
+      blueRate.compra,
+      blueRate.venta,
+      'blue_manual'
+    )
+    
+    console.log('✅ Cotización blue actualizada:', saved)
+    return saved
+  } catch (error) {
+    console.error('❌ Error updating blue exchange rate:', error)
     throw error
   }
 }

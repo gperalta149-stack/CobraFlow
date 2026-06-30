@@ -1,3 +1,4 @@
+// frontend/src/context/MonedaConfigContext.tsx
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { perfilApi } from '../features/perfil/services/perfilApi'
 import { handleApiError } from '../utils/handleApiError'
@@ -53,7 +54,6 @@ export function MonedaConfigProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Se ejecuta UNA sola vez para toda la app, no una vez por card/fila
     const load = async () => {
       setLoading(true)
       try {
@@ -61,15 +61,17 @@ export function MonedaConfigProvider({ children }: { children: ReactNode }) {
         setConfig(response.data)
       } catch (err) {
         console.error('Error cargando configuración de moneda:', err)
+        // ← En caso de error, mantener config por defecto
       } finally {
-        setLoading(false)
+        setLoading(false) // ← SIEMPRE setear a false
       }
     }
     load()
   }, [])
 
   const debeMostrarEquivalencia = (seccion: 'dashboard' | 'deudas' | 'pagos' | 'analisis'): boolean => {
-    if (loading) return false
+    // ← Si está cargando, NO mostrar equivalencias
+    if (loading || rateLoading) return false
     if (!config.mostrarEquivalencias) return false
     return config.secciones[seccion]
   }

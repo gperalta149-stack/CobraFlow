@@ -7,74 +7,70 @@ import { calcularMora } from '../../../lib/calcularMora'
 import { useMora } from '../../perfil/hooks/useMora'
 import type { DatosEvolucionPagos, DatosComparativa } from '../../dashboard/types'
 import type { Deuda } from '../../pagos/types'
+import type { 
+  Periodo, 
+  ClienteConMora, 
+  AgingData, 
+  BalanceData, 
+  KPIsAnalisis,
+  PeriodoConfig 
+} from '../types'
 
-export interface ClienteConMora {
-  id: string
-  nombre: string
-  deuda_original: number
-  mora_acumulada: number
-  total: number
-  moneda: 'ARS' | 'USD'
+// ── Configuración según período ──────────────────────────────────────
+const PERIODO_CONFIG: Record<Periodo, PeriodoConfig> = {
+  semana: {
+    fechaInicio: (() => { const d = new Date(); d.setDate(d.getDate() - 7); d.setHours(0,0,0,0); return d })(),
+    evolucionMeses: 1,
+    evolucionLabel: 'Últimos 7 días',
+  },
+  mes: {
+    fechaInicio: (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); d.setHours(0,0,0,0); return d })(),
+    evolucionMeses: 1,
+    evolucionLabel: 'Último mes',
+  },
+  trimestre: {
+    fechaInicio: (() => { const d = new Date(); d.setMonth(d.getMonth() - 3); d.setHours(0,0,0,0); return d })(),
+    evolucionMeses: 3,
+    evolucionLabel: 'Último trimestre',
+  },
+  semestre: {
+    fechaInicio: (() => { const d = new Date(); d.setMonth(d.getMonth() - 6); d.setHours(0,0,0,0); return d })(),
+    evolucionMeses: 6,
+    evolucionLabel: 'Último semestre',
+  },
+  año: {
+    fechaInicio: (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); d.setHours(0,0,0,0); return d })(),
+    evolucionMeses: 12,
+    evolucionLabel: 'Último año',
+  },
 }
 
-export interface AgingData {
-  tramo: string
-  montoARS: number
-  montoUSD: number
-}
-
-interface BalanceData {
-  cobradoARS: number
-  cobradoUSD: number
-  nuevasDeudasARS: number
-  nuevasDeudasUSD: number
-  recuperacionARS: number
-  recuperacionUSD: number
-}
-
-interface KPIsAnalisis {
-  montoVencidoARS: number
-  montoVencidoUSD: number
-  porcentajeVencidoARS: number
-  porcentajeVencidoUSD: number
-}
-
-type Periodo = 'semana' | 'mes' | 'trimestre' | 'semestre' | 'año'
-
-// CORREGIDA: usa primer día del mes para "mes"
 const getFechaInicio = (periodo: Periodo): Date => {
   const hoy = new Date()
   switch (periodo) {
     case 'semana': {
-      const d = new Date(hoy)
-      d.setDate(d.getDate() - 7)
-      d.setHours(0, 0, 0, 0)
-      return d
+      const d = new Date(hoy); d.setDate(d.getDate() - 7); d.setHours(0, 0, 0, 0); return d
     }
     case 'mes': {
-      // Primer día del mes actual
-      const d = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-      d.setHours(0, 0, 0, 0)
-      return d
+      const d = new Date(hoy.getFullYear(), hoy.getMonth(), 1); d.setHours(0, 0, 0, 0); return d
     }
     case 'trimestre': {
-      const d = new Date(hoy)
-      d.setMonth(d.getMonth() - 3)
-      d.setHours(0, 0, 0, 0)
-      return d
+      const d = new Date(hoy); d.setMonth(d.getMonth() - 3); d.setHours(0, 0, 0, 0); return d
     }
     case 'semestre': {
-      const d = new Date(hoy)
-      d.setMonth(d.getMonth() - 6)
-      d.setHours(0, 0, 0, 0)
-      return d
+      const d = new Date(hoy); d.setMonth(d.getMonth() - 6); d.setHours(0, 0, 0, 0); return d
     }
     case 'año': {
-      const d = new Date(hoy)
-      d.setFullYear(d.getFullYear() - 1)
-      d.setHours(0, 0, 0, 0)
-      return d
+      const d = new Date(hoy); d.setFullYear(d.getFullYear() - 1); d.setHours(0, 0, 0, 0); return d
     }
+  }
+}
+
+const getEvolucionConfig = (periodo: Periodo) => {
+  const config = PERIODO_CONFIG[periodo]
+  return {
+    meses: config.evolucionMeses,
+    label: config.evolucionLabel,
   }
 }
 
@@ -101,6 +97,7 @@ export function useAnalisis(periodo: Periodo) {
       setError('')
       try {
         const fechaInicio = getFechaInicio(periodo)
+        const evolConfig = getEvolucionConfig(periodo)
 
         const [evolucionRes, dashboardRes, deudasRes, pagosRes] = await Promise.all([
           dashboardApi.getPagosPorMes().then(r => r.data).catch(() => [] as DatosEvolucionPagos[]),
@@ -113,12 +110,13 @@ export function useAnalisis(periodo: Periodo) {
         const alertas = dashboardRes.data.alertas ?? []
         const cotizacionVigente = dashboardRes.data.cotizacion?.venta || 1
 
-        setEvolucionPagos(evolucionRes)
+        // ── Evolución filtrada por período ──────────────────────
+        const evolucionFiltrada = evolucionRes.slice(-evolConfig.meses)
+        setEvolucionPagos(evolucionFiltrada)
 
-        // 1. KPIs Superiores de Deuda Vencida
+        // ── KPIs ──────────────────────────────────────────────────
         const montoVencidoARS = backendKpis.montoVencidoARS ?? 0
         const montoVencidoUSD = backendKpis.montoVencidoUSD ?? 0
-
         const totalPendienteARS = backendKpis.totalMontoPendienteARS ?? 0
         const totalPendienteUSD = backendKpis.totalMontoPendienteUSD ?? 0
 
@@ -129,13 +127,10 @@ export function useAnalisis(periodo: Periodo) {
           porcentajeVencidoUSD: totalPendienteUSD > 0 ? (montoVencidoUSD / totalPendienteUSD) * 100 : 0
         })
 
-        // 2. Proyecciones a 30 días
+        // ── Proyecciones ──────────────────────────────────────────
         const hoy = new Date()
-        const hoy30 = new Date()
-        hoy30.setDate(hoy30.getDate() + 30)
-
-        let projARS = 0
-        let projUSD = 0
+        const hoy30 = new Date(); hoy30.setDate(hoy30.getDate() + 30)
+        let projARS = 0, projUSD = 0
 
         alertas.forEach((a: any) => {
           if (!a.fecha_vencimiento) return
@@ -153,19 +148,39 @@ export function useAnalisis(periodo: Periodo) {
         setProyeccionARS(projARS)
         setProyeccionUSD(projUSD)
 
-        // 3. Distribución por estado
-        const distribucion: DatosComparativa[] = [
-          { nombre: 'Pendiente', valor: backendKpis.deudasPendientes ?? 0, color: '#EF9F27' },
-          { nombre: 'Parcial', valor: backendKpis.deudasParciales ?? 0, color: '#378ADD' },
-          { nombre: 'Pagada', valor: backendKpis.deudasPagadas ?? 0, color: '#1D9E75' },
-          { nombre: 'Vencida', valor: backendKpis.deudasVencidas ?? 0, color: '#E24B4A' },
-        ].filter(item => item.valor > 0)
+        // ── Distribución por estado (FILTRADA) ──────────────────
+        const deudasTodas = deudasRes.data || []
+        const deudasPeriodo = deudasTodas.filter((d: any) => {
+          const fechaCreacion = new Date(d.fecha_creacion || d.created_at || d.fecha_vencimiento)
+          return fechaCreacion >= fechaInicio
+        })
+        const deudasParaDistribucion = deudasPeriodo.length > 0 ? deudasPeriodo : deudasTodas
+
+        const distribucionMap = new Map<string, number>()
+        deudasParaDistribucion.forEach((d: any) => {
+          const estado = d.estado || 'pendiente'
+          distribucionMap.set(estado, (distribucionMap.get(estado) || 0) + 1)
+        })
+
+        const estadoColors: Record<string, string> = {
+          pendiente: '#EF9F27', parcial: '#378ADD',
+          pagada: '#1D9E75', vencida: '#E24B4A',
+        }
+
+        const distribucion: DatosComparativa[] = Array.from(distribucionMap.entries()).map(([estado, valor]) => ({
+          nombre: estado === 'pendiente' ? 'Pendiente' :
+                  estado === 'parcial' ? 'Parcial' :
+                  estado === 'pagada' ? 'Pagada' :
+                  estado === 'vencida' ? 'Vencida' : estado,
+          valor,
+          color: estadoColors[estado] || '#6b7280',
+        })).filter(item => item.valor > 0)
+
         setDeudasPorEstadoData(distribucion)
 
-        // 4. Balance del período
+        // ── Balance del período ──────────────────────────────────
         const pagosPeriodo = pagosRes.data || []
-        let cobradoARS = 0
-        let cobradoUSD = 0
+        let cobradoARS = 0, cobradoUSD = 0
 
         pagosPeriodo.forEach((p: any) => {
           const fechaPago = new Date(p.fecha_pago || p.created_at)
@@ -178,12 +193,8 @@ export function useAnalisis(periodo: Periodo) {
           }
         })
 
-        const deudasTodas = deudasRes.data || []
-        let nuevasDeudasARS = 0
-        let nuevasDeudasUSD = 0
-
-        let saldoPendienteHistoricoARS = 0
-        let saldoPendienteHistoricoUSD = 0
+        let nuevasDeudasARS = 0, nuevasDeudasUSD = 0
+        let saldoPendienteHistoricoARS = 0, saldoPendienteHistoricoUSD = 0
 
         deudasTodas.forEach((d: any) => {
           const fechaCreacion = new Date(d.fecha_creacion || d.created_at || d.fecha_vencimiento)
@@ -212,7 +223,7 @@ export function useAnalisis(periodo: Periodo) {
           recuperacionUSD: totalCarteraUSD > 0 ? (cobradoUSD / totalCarteraUSD) * 100 : 0
         })
 
-        // 5. Clientes con mayor mora
+        // ── Clientes con mayor mora (SIN FILTRAR) ──────────────
         const deudasVencidas = deudasTodas.filter((d: Deuda) => d.estado === 'vencida')
         const moraPorCliente = new Map<string, ClienteConMora>()
 
@@ -221,6 +232,7 @@ export function useAnalisis(periodo: Periodo) {
             deuda.saldo_pendiente,
             deuda.fecha_vencimiento,
             deuda.estado,
+            deuda.monto_mora_acumulada,
             moraConfig
           )
 
@@ -254,7 +266,7 @@ export function useAnalisis(periodo: Periodo) {
           .slice(0, 5)
         setClientesMora(topMora)
 
-        // 6. Aging Report
+        // ── Aging Report (SIN FILTRAR) ──────────────────────────
         const agingARS: Record<string, number> = { '0-30': 0, '31-60': 0, '61-90': 0, '+90': 0 }
         const agingUSD: Record<string, number> = { '0-30': 0, '31-60': 0, '61-90': 0, '+90': 0 }
         const ahora = new Date()
@@ -305,6 +317,7 @@ export function useAnalisis(periodo: Periodo) {
     proyeccionARS,
     proyeccionUSD,
     loading,
-    error
+    error,
+    periodo,
   }
 }

@@ -24,41 +24,26 @@ export function TopClientesChart({ clientes, maxSaldo }: TopClientesChartProps) 
 
   if (clientesMostrar.length === 0) {
     return (
-      <div style={{
-        backgroundColor: '#242938',
-        border: '0.5px solid #2e3347',
-        borderRadius: 12,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-      }}>
+      <div className="metric-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
         <p style={{ fontSize: 13, color: '#6b7280' }}>Sin datos de clientes</p>
       </div>
     )
   }
 
   return (
-    <div style={{
-      backgroundColor: '#242938',
-      border: '0.5px solid #2e3347',
-      borderRadius: 12,
-      overflow: 'hidden',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <div style={{ padding: '16px 20px', borderBottom: '0.5px solid #2e3347', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <div style={{ padding: 6, background: '#E24B4A20', borderRadius: 8, color: '#E24B4A', display: 'flex' }}>
-          <IconUsers size={16} />
-        </div>
-        <div>
-          <h2 style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', margin: 0 }}>Top clientes</h2>
-          <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Mayor saldo pendiente</p>
+    <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="metric-card-header-spaced">
+        <div className="metric-card-header" style={{ marginBottom: 0 }}>
+          <div className="metric-card-icon" style={{ background: '#E24B4A20', color: '#E24B4A' }}>
+            <IconUsers size={16} />
+          </div>
+          <div>
+            <p className="metric-card-title">Top clientes</p>
+            <p className="metric-card-subtitle">Mayor saldo pendiente</p>
+          </div>
         </div>
       </div>
 
-      {/* Scroll ELIMINADO - ahora el contenido fluye naturalmente */}
       <div>
         <ul style={{ listStyle: 'none', margin: 0, padding: '8px 20px' }}>
           {clientesMostrar.map((c, index) => {

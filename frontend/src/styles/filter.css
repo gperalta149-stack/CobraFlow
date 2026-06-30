@@ -9,10 +9,149 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DEUDA FILTERS — pill bar con popovers (Estado / Vencimiento / Monto)
+   PANEL DE FILTROS
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Barra de filtros */
+.filter-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #1a1d2e;
+  border-radius: 12px;
+  border: 0.5px solid #2e3347;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+}
+
+.filter-panel .filter-icon {
+  padding: 6px;
+  background: #1D9E7520;
+  border-radius: 8px;
+  color: #1D9E75;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.filter-panel .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-panel .filter-group-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+
+.filter-panel .filter-divider {
+  width: 1px;
+  height: 22px;
+  background: #2e3347;
+  flex-shrink: 0;
+}
+
+.filter-panel .filter-search {
+  margin-left: auto;
+  flex: 0 1 240px;
+  min-width: 180px;
+}
+
+/* ── Pills del panel ────────────────────────────────────────────────────── */
+
+.filter-pill-panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  background: transparent;
+  border: 0.5px solid transparent;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.filter-pill-panel .pill-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  color: #6b7280;
+  margin-left: 2px;
+}
+
+.filter-pill-panel.is-active {
+  background: rgba(29, 158, 117, 0.15);
+  border-color: rgba(29, 158, 117, 0.55);
+  color: #1D9E75;
+  font-weight: 600;
+}
+
+.filter-pill-panel.is-active .pill-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+.filter-pill-panel:hover:not(.is-active) {
+  color: #f0f2f5;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Botón limpiar ───────────────────────────────────────────────────────── */
+
+.filter-clear-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+
+.filter-clear-btn:hover {
+  color: #f0f2f5;
+}
+
+.filter-clear-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Grupo de pills ────────────────────────────────────────────────────── */
+
+.filter-pills-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BARRA DE FILTROS (FilterBar)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
@@ -46,7 +185,9 @@
   font-weight: 500;
 }
 
-/* ── Pill base ──────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   PILL BASE (popovers)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .filter-pill {
   display: inline-flex;
@@ -116,7 +257,10 @@
 /* Wrapper para popovers */
 .filter-pill-group { position: relative; }
 
-/* Popover base compartida */
+/* ═══════════════════════════════════════════════════════════════════════════
+   POPOVER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .filter-popover {
   position: absolute;
   top: calc(100% + 8px);
@@ -262,7 +406,10 @@
 .filter-btn.primary { background-color: var(--status-pagada); color: white; }
 .filter-btn.primary:hover { background-color: #17a076; }
 
-/* Opciones de estado en popover */
+/* ═══════════════════════════════════════════════════════════════════════════
+   OPCIONES DE ESTADO (popover)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .status-option {
   display: flex;
   align-items: center;
@@ -301,7 +448,10 @@
 .status-option--active.status-option--vencida   { color: var(--status-vencida); }
 .status-option--active.status-option--pagada    { color: var(--status-pagada); }
 
-/* Botón X en pill activa */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOTÓN X EN PILL ACTIVA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .pill-close {
   display: inline-flex;
   align-items: center;
@@ -325,7 +475,10 @@
   z-index: 1;
 }
 
-/* Separador y limpiar todo */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEPARADOR Y LIMPIAR TODO
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .filter-bar-divider {
   width: 0.5px;
   height: 20px;
@@ -370,236 +523,23 @@
   line-height: 1;
 }
 
-/* Overlay para cerrar popovers */
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .filter-overlay {
   position: fixed;
   inset: 0;
   z-index: 99;
 }
 
-/* Disabled */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DISABLED
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .filter-pill:disabled,
 .filter-clear-all:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   PAGOS FILTERS — panel con buscador + grupos de pills (toggle, sin popover)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Panel contenedor */
-.pagos-filter-panel {
-  background-color: var(--bg-card);
-  border: 0.5px solid var(--border-dark);
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Buscador */
-.pagos-search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.pagos-search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-}
-
-.pagos-search-input {
-  width: 100%;
-  padding: 9px 36px;
-  background: var(--bg-secondary);
-  border: 0.5px solid var(--border-dark);
-  border-radius: 10px;
-  font-size: 13px;
-  color: var(--text-primary);
-  outline: none;
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-.pagos-search-input:focus {
-  border-color: var(--status-pagada);
-  box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.15);
-}
-
-.pagos-search-input::placeholder { color: var(--text-muted); }
-
-.pagos-search-clear {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 4px;
-  transition: color 0.15s;
-}
-
-.pagos-search-clear:hover { color: var(--text-primary); }
-
-/* Dropdown de sugerencias */
-.pagos-search-dropdown {
-  position: absolute;
-  z-index: 100;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: var(--bg-card);
-  border: 0.5px solid var(--border-dark);
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
-  animation: filter-pop 0.12s ease-out;
-}
-
-.pagos-search-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 14px;
-  background: transparent;
-  border: none;
-  border-bottom: 0.5px solid var(--border-dark);
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.1s ease-out;
-}
-
-.pagos-search-option:last-child { border-bottom: none; }
-.pagos-search-option:hover { background: var(--bg-hover); }
-
-.pagos-search-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(29, 158, 117, 0.15);
-  color: var(--status-pagada);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.pagos-search-option-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.pagos-search-option-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 1px;
-}
-
-/* Divisor entre buscador y pills */
-.pagos-filter-divider {
-  height: 0.5px;
-  background-color: var(--border-dark);
-}
-
-/* Grupo de filtro (label + pills) */
-.pagos-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.pagos-filter-group-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  min-width: 52px;
-  flex-shrink: 0;
-}
-
-.pagos-filter-pills {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-/* Pill toggle de pagos */
-.pagos-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 0.5px solid var(--border-dark);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-  white-space: nowrap;
-}
-
-.pagos-pill:hover {
-  border-color: var(--border-hover);
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
-
-.pagos-pill.is-active {
-  background: rgba(29, 158, 117, 0.15);
-  border-color: rgba(29, 158, 117, 0.55);
-  color: var(--status-pagada);
-  font-weight: 600;
-}
-
-/* Footer: resultados + limpiar */
-.pagos-filter-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 10px;
-  border-top: 0.5px solid var(--border-dark);
-}
-
-.pagos-filter-results {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.pagos-filter-results strong {
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.pagos-filter-clear {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--status-vencida);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.pagos-filter-clear:hover { opacity: 0.8; }

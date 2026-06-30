@@ -1,3 +1,4 @@
+// frontend/src/features/deudas/hooks/useDeudas.ts
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { deudasApi } from '../services/deudasApi'
 import { handleApiError } from '../../../utils/handleApiError'
@@ -14,7 +15,6 @@ export function useDeudas() {
 
   const { config: moraConfig } = useMoraConfig()
 
-  // filtros
   const [filtroEstados, setFiltroEstados]         = useState<string[]>([])
   const [filtroDesde, setFiltroDesde]             = useState('')
   const [filtroHasta, setFiltroHasta]             = useState('')
@@ -72,10 +72,10 @@ export function useDeudas() {
     return true
   }), [deudas, filtroEstados, filtroDesde, filtroHasta, filtroMontoMin, filtroMontoMax, filtroMonedaMonto, cotizacionActual])
 
-  // ── Métricas separadas por moneda ─────────────────────────────────────────
+  // ── Métricas separadas por moneda (sobre lo filtrado, eso sí está bien) ──
   const metricas = useMemo(() => {
-    let pendienteARS = 0   // saldo de deudas en ARS
-    let pendienteUSD = 0   // saldo de deudas en USD (en su moneda original)
+    let pendienteARS = 0
+    let pendienteUSD = 0
     let vencidasARS  = 0
     let vencidasUSD  = 0
     let moraARS      = 0
@@ -88,17 +88,21 @@ export function useDeudas() {
         pendienteARS += saldo
         if (d.estado === 'vencida') vencidasARS += saldo
       } else {
-        // USD: saldo_pendiente está en ARS (monto_total es en ARS)
-        // monto_original es en USD
         const cotiz = Number(d.cotizacion) || cotizacionActual
         const saldoUSD = saldo / cotiz
         pendienteUSD += saldoUSD
         if (d.estado === 'vencida') vencidasUSD += saldoUSD
       }
 
-      // Mora
+      // ✅ ACTUALIZADO: Ahora pasa monto_mora_acumulada
       if (moraConfig && d.estado === 'vencida') {
-        const mora = calcularMora(saldo, d.fecha_vencimiento, d.estado, moraConfig)
+        const mora = calcularMora(
+          saldo, 
+          d.fecha_vencimiento, 
+          d.estado, 
+          d.monto_mora_acumulada,  // ← agregado
+          moraConfig
+        )
         if (mora.tieneMora) {
           if (d.moneda === 'ARS') {
             moraARS += mora.montoMora
@@ -121,18 +125,22 @@ export function useDeudas() {
       .filter(d =>
         d.estado !== 'pagada' &&
         d.estado !== 'vencida' &&
-        new Date(d.fecha_vencimiento) >= hoy   // por las dudas, doble filtro
+        new Date(d.fecha_vencimiento) >= hoy
       )
       .sort((a, b) => new Date(a.fecha_vencimiento).getTime() - new Date(b.fecha_vencimiento).getTime())[0]
   }, [deudasFiltradas])
 
-  // ── Contadores quick filters ──────────────────────────────────────────────
+  // ── Contadores de chips: SOBRE deudas (sin filtrar), no deudasFiltradas ──
+  // Esto es lo que corregí: antes usaba deudasFiltradas, lo cual hacía que
+  // los counts cambiaran con filtros de fecha/monto activos. Los chips deben
+  // reflejar siempre los totales reales disponibles.
   const counts = useMemo(() => ({
-    todos:     deudasFiltradas.length,
-    activas:   deudasFiltradas.filter(d => d.estado === 'pendiente' || d.estado === 'parcial').length,
-    vencidas:  deudasFiltradas.filter(d => d.estado === 'vencida').length,
-    parciales: deudasFiltradas.filter(d => d.estado === 'parcial').length,
-  }), [deudasFiltradas])
+    todos:     deudas.length,
+    activas:   deudas.filter(d => d.estado === 'pendiente' || d.estado === 'parcial').length,
+    vencidas:  deudas.filter(d => d.estado === 'vencida').length,
+    parciales: deudas.filter(d => d.estado === 'parcial').length,
+    pagadas:   deudas.filter(d => d.estado === 'pagada').length,
+  }), [deudas])
 
   const hayFiltrosActivos =
     filtroEstados.length > 0 || filtroDesde !== '' || filtroHasta !== '' ||
@@ -158,7 +166,6 @@ export function useDeudas() {
     filtroMonedaMonto, setFiltroMonedaMonto,
     hayFiltrosActivos, limpiarFiltros,
     refetchDeudas, loadData,
-    // Métricas separadas por moneda
     pendienteARS:  metricas.pendienteARS,
     pendienteUSD:  metricas.pendienteUSD,
     vencidasARS:   metricas.vencidasARS,

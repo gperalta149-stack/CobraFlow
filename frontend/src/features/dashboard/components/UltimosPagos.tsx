@@ -1,6 +1,7 @@
 // frontend/src/features/dashboard/components/UltimosPagos.tsx
 import { IconHistory } from '@tabler/icons-react'
 import { useMonedaConfig } from '../../../hooks/useMonedaConfig'
+import { H3, TextSmall, TextMuted } from '../../../components/ui/Typography'
 import type { UltimoPago } from '../types'
 
 interface UltimosPagosProps {
@@ -48,26 +49,26 @@ export function UltimosPagos({ pagos }: UltimosPagosProps) {
 
   if (!pagosMostrar.length) {
     return (
-      <div style={{ backgroundColor: '#242938', border: '0.5px solid #2e3347', borderRadius: 12, padding: '24px', textAlign: 'center', height: '100%' }}>
-        <IconHistory size={32} style={{ color: '#4a5568', marginBottom: 12 }} />
-        <p style={{ fontSize: 13, color: '#94a3b8' }}>No hay pagos registrados aún</p>
+      <div className="metric-card" style={{ padding: '24px', textAlign: 'center', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>
+          <IconHistory size={32} style={{ color: '#4a5568', marginBottom: 12 }} />
+          <TextMuted>No hay pagos registrados aún</TextMuted>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{
-      backgroundColor: '#242938', border: '0.5px solid #2e3347',
-      borderRadius: 12, overflow: 'hidden', height: '100%',
-      display: 'flex', flexDirection: 'column',
-    }}>
-      <div style={{ padding: '16px 20px', borderBottom: '0.5px solid #2e3347', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <div style={{ padding: 6, background: '#1D9E7520', borderRadius: 8, color: '#1D9E75', display: 'flex' }}>
-          <IconHistory size={16} />
-        </div>
-        <div>
-          <h2 style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', margin: 0 }}>Últimos pagos</h2>
-          <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Últimos movimientos</p>
+    <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="metric-card-header-spaced">
+        <div className="metric-card-header" style={{ marginBottom: 0 }}>
+          <div className="metric-card-icon" style={{ background: '#1D9E7520', color: '#1D9E75' }}>
+            <IconHistory size={16} />
+          </div>
+          <div>
+            <p className="metric-card-title">Últimos pagos</p>
+            <p className="metric-card-subtitle">Últimos movimientos</p>
+          </div>
         </div>
       </div>
 
@@ -79,9 +80,9 @@ export function UltimosPagos({ pagos }: UltimosPagosProps) {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', marginBottom: 6 }}>
+              <H3 style={{ fontSize: 13, marginBottom: 6 }}>
                 {pago.clientes?.nombre || 'Cliente'}
-              </p>
+              </H3>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{
                   fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
@@ -99,18 +100,22 @@ export function UltimosPagos({ pagos }: UltimosPagosProps) {
                 </span>
               </div>
             </div>
+
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: pago.moneda === 'USD' ? '#fbbf24' : '#f0f2f5', margin: 0 }}>
+              <H3 style={{
+                fontSize: 15,
+                color: pago.moneda === 'USD' ? '#fbbf24' : '#f0f2f5',
+              }}>
                 {fmtPrincipal(pago)}
-              </p>
+              </H3>
               {mostrarEquivalencia && (
-                <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                <TextSmall style={{ marginTop: 2 }}>
                   {fmtEquivalencia(pago)}
-                </p>
+                </TextSmall>
               )}
-              <p style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>
+              <TextSmall style={{ marginTop: 2 }}>
                 {new Date(pago.created_at).toLocaleDateString('es-AR')}
-              </p>
+              </TextSmall>
             </div>
           </div>
         ))}

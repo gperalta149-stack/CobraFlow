@@ -1,22 +1,45 @@
 // frontend/src/features/home/components/CTA.tsx
 import { useNavigate } from 'react-router-dom'
 import { IconRocket } from '@tabler/icons-react'
+import { DisplayHeading, TextMuted } from '../../../components/ui/Typography'
 
 export function CTA() {
   const navigate = useNavigate()
+
   return (
-    <section style={{ padding: '64px 48px', textAlign: 'center' }}>
-      <div style={{ background: '#1a1d2e', border: '0.5px solid rgba(29,158,117,0.3)', borderRadius: 16, padding: '48px', maxWidth: 520, margin: '0 auto' }}>
-        <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f0f2f5', marginBottom: 10, letterSpacing: '-0.3px' }}>
-          Dejá de perder dinero por desorden
-        </h2>
-        <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28 }}>Sin costos ocultos. Sin complicaciones. Empezá hoy.</p>
-        <button
-          onClick={() => navigate('/register')}
-          style={{ padding: '12px 28px', fontSize: 13, fontWeight: 600, background: '#1D9E75', color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+    <section className="cta-section">
+      <div className="cta-card">
+        <div className="cta-orb" style={{ background: 'rgba(29,158,117,.06)',  top: -80,  right: -60, animationDuration: '4s' }} />
+        <div className="cta-orb" style={{ background: 'rgba(96,165,250,.04)', bottom: -50, left: -40, animationDuration: '5s', animationDelay: '1s' }} />
+
+        <DisplayHeading
+          className="cta-title"
+          style={{ fontSize: 32, letterSpacing: '-.5px' }}
         >
-          <IconRocket size={15} /> Crear cuenta gratis
-        </button>
+          Dejá de perder dinero por desorden
+        </DisplayHeading> <br />
+
+        <TextMuted
+          className="cta-subtitle"
+          style={{ fontSize: 16, lineHeight: 1.6 }}
+        >
+          Sin costos ocultos. Sin complicaciones. Empezá hoy.
+        </TextMuted> <br />
+
+        <div className="cta-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+          <button className="cta-btn" onClick={() => navigate('/register')}>
+            <IconRocket size={18} /> Crear cuenta gratis
+          </button>
+          
+          {/* Botón secundario agregado para mejorar la UX de usuarios recurrentes */}
+          <button 
+            className="cta-link" 
+            onClick={() => navigate('/login')}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            ¿Ya tenés una cuenta? Iniciá sesión
+          </button>
+        </div>
       </div>
     </section>
   )

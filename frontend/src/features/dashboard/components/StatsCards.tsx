@@ -2,6 +2,8 @@
 import { IconWallet, IconAlertCircle, IconTrendingUp, IconCalendar } from '@tabler/icons-react'
 import { DualMetricCard } from '../../../components/shared/DualMetricCard'
 import { MetricCard } from '../../../components/shared/MetricCard'
+import { TextMuted } from '../../../components/ui/Typography'
+import { useMonedaConfig } from '../../../hooks/useMonedaConfig'  // ← AGREGAR
 import type { KPIs } from '../types'
 
 interface StatsCardsProps {
@@ -16,6 +18,10 @@ function formatCurrency(value: number, currency: 'ARS' | 'USD'): string {
 }
 
 export function StatsCards({ kpis }: StatsCardsProps) {
+  // ← AGREGAR el hook
+  const { debeMostrarEquivalencia } = useMonedaConfig()
+  const mostrarEquivalencia = debeMostrarEquivalencia('dashboard')
+
   if (!kpis) return null
 
   const variacion = kpis.variacionMensual
@@ -62,67 +68,49 @@ export function StatsCards({ kpis }: StatsCardsProps) {
         subtitle={`${kpis.deudasCobradas} de ${kpis.deudasTotalesParaRecuperacion} deudas cobradas`}
       />
 
-      <div style={{
-        backgroundColor: '#242938',
-        border: '0.5px solid #2e3347',
-        borderRadius: 12,
-        padding: '16px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-      }}>
+      {/* Variación mensual - con toggle de equivalencias */}
+      <div className="metric-card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{
-              padding: 6,
-              background: '#f59e0b20',
-              borderRadius: 8,
-              color: '#f59e0b',
-              display: 'flex',
-            }}>
+          <div className="metric-card-header" style={{ marginBottom: 0 }}>
+            <div className="metric-card-icon" style={{ background: '#f59e0b20', color: '#f59e0b' }}>
               <IconCalendar size={15} />
             </div>
-            <p style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: '#6b7280',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              margin: 0,
-            }}>
-              Variación mensual
-            </p>
+            <p className="metric-label">Variación mensual</p>
           </div>
           {variacion && (
-            <span style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: isPositive ? '#34d399' : '#f87171',
-            }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: isPositive ? '#34d399' : '#f87171' }}>
               {isPositive ? '↗' : '↘'} {Math.abs(variacionNum).toFixed(1)}%
             </span>
           )}
         </div>
 
-        <div style={{ marginBottom: 8 }}>
-          <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>Mes anterior</p>
-          <p style={{ fontSize: 13, fontWeight: 500, color: '#f0f2f5' }}>
+        <div className="metric-mini-row">
+          <TextMuted className="metric-mini-label">Mes anterior</TextMuted>
+          <p className="metric-mini-value">
             {formatCurrency(kpis.totalRecaudadoMesPasadoARS ?? 0, 'ARS')}
-            <span style={{ fontSize: 11, color: '#6b7280', margin: '0 6px' }}>·</span>
-            <span style={{ fontSize: 12, color: '#fbbf24' }}>
-              {formatCurrency(kpis.totalRecaudadoMesPasadoUSD ?? 0, 'USD')}
-            </span>
+            {mostrarEquivalencia && (  // ← condición: solo mostrar USD si está activado
+              <>
+                <span className="sep">·</span>
+                <span className="usd">
+                  {formatCurrency(kpis.totalRecaudadoMesPasadoUSD ?? 0, 'USD')}
+                </span>
+              </>
+            )}
           </p>
         </div>
 
         <div>
-          <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>Mes actual</p>
-          <p style={{ fontSize: 13, fontWeight: 500, color: '#f0f2f5' }}>
+          <TextMuted className="metric-mini-label">Mes actual</TextMuted>
+          <p className="metric-mini-value">
             {formatCurrency(kpis.totalRecaudadoMesARS, 'ARS')}
-            <span style={{ fontSize: 11, color: '#6b7280', margin: '0 6px' }}>·</span>
-            <span style={{ fontSize: 12, color: '#fbbf24' }}>
-              {formatCurrency(kpis.totalRecaudadoMesUSD, 'USD')}
-            </span>
+            {mostrarEquivalencia && (  // ← condición: solo mostrar USD si está activado
+              <>
+                <span className="sep">·</span>
+                <span className="usd">
+                  {formatCurrency(kpis.totalRecaudadoMesUSD, 'USD')}
+                </span>
+              </>
+            )}
           </p>
         </div>
       </div>

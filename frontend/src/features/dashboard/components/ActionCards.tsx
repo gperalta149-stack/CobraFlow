@@ -2,6 +2,7 @@
 import { IconAlertTriangle, IconCash, IconEye } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useMonedaConfig } from '../../../hooks/useMonedaConfig'
+import { H2, H1, TextSmall, TextMuted } from '../../../components/ui/Typography'
 import type { ClienteMayorRiesgo } from '../types'
 
 function formatCurrency(value: number, currency: 'ARS' | 'USD'): string {
@@ -18,20 +19,10 @@ export function ClienteMayorRiesgoCard({ cliente }: { cliente: ClienteMayorRiesg
 
   if (!cliente) {
     return (
-      <div style={{
-        backgroundColor: '#242938',
-        border: '0.5px solid #2e3347',
-        borderRadius: 12,
-        padding: '24px',
-        textAlign: 'center',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
+      <div className="metric-card" style={{ padding: '24px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div>
           <IconAlertTriangle size={32} style={{ color: '#4a5568', marginBottom: 12 }} />
-          <p style={{ fontSize: 13, color: '#94a3b8' }}>No hay deudas vencidas</p>
+          <TextMuted>No hay deudas vencidas</TextMuted>
         </div>
       </div>
     )
@@ -39,7 +30,6 @@ export function ClienteMayorRiesgoCard({ cliente }: { cliente: ClienteMayorRiesg
 
   const isUSD = cliente.moneda === 'USD'
 
-  // Equivalencias
   const pendienteEq = isUSD
     ? `≈ $${Math.round(cliente.pendiente * cotizacion).toLocaleString('es-AR')} ARS`
     : `≈ USD ${(cliente.pendiente / cotizacion).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -51,78 +41,59 @@ export function ClienteMayorRiesgoCard({ cliente }: { cliente: ClienteMayorRiesg
     : `≈ USD ${(cliente.total / cotizacion).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   return (
-    <div style={{
-      backgroundColor: '#242938',
-      border: '0.5px solid #E24B4A40',
-      borderRadius: 12,
-      overflow: 'hidden',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <div style={{
-        padding: '16px 20px',
-        borderBottom: '0.5px solid #2e3347',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-      }}>
-        <div style={{ padding: 6, background: '#E24B4A20', borderRadius: 8, color: '#E24B4A', display: 'flex' }}>
+    <div className="metric-card" style={{ borderColor: '#E24B4A40', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="metric-card-header-spaced">
+        <div className="metric-card-icon" style={{ background: '#E24B4A20', color: '#E24B4A' }}>
           <IconAlertTriangle size={16} />
         </div>
         <div>
-          <h2 style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', margin: 0 }}>Mayor riesgo</h2>
-          <p style={{ fontSize: 11, color: '#E24B4A', margin: 0 }}>{cliente.dias_vencido} días vencido</p>
+          <p className="metric-card-title">Mayor riesgo</p>
+          <p className="metric-card-subtitle" style={{ color: '#E24B4A' }}>{cliente.dias_vencido} días vencido</p>
         </div>
       </div>
 
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* Nombre y descripción del cliente */}
         <div>
-          <p style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5', margin: 0 }}>
-            {cliente.nombre}
-          </p>
-          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
-            {cliente.descripcion}
-          </p>
+          <H2 style={{ fontSize: 20 }}>{cliente.nombre}</H2>
+          <TextSmall style={{ color: '#94a3b8', marginTop: 4 }}>{cliente.descripcion}</TextSmall>
         </div>
 
+        {/* Pendiente + Mora */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div style={{ background: '#1e2334', padding: 12, borderRadius: 8 }}>
-            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>Pendiente</p>
-            <p style={{ fontSize: 18, fontWeight: 700, color: isUSD ? '#fbbf24' : '#f87171' }}>
+            <TextSmall style={{ marginBottom: 6 }}>Pendiente</TextSmall>
+            <H2 style={{ fontSize: 18, color: isUSD ? '#fbbf24' : '#f87171' }}>
               {formatCurrency(cliente.pendiente, cliente.moneda)}
-            </p>
+            </H2>
             {mostrarEquivalencia && (
-              <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{pendienteEq}</p>
+              <TextSmall style={{ marginTop: 4 }}>{pendienteEq}</TextSmall>
             )}
           </div>
 
           <div style={{ background: '#1e2334', padding: 12, borderRadius: 8 }}>
-            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>Mora acumulada</p>
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#fb923c' }}>
+            <TextSmall style={{ marginBottom: 6 }}>Mora acumulada</TextSmall>
+            <H2 style={{ fontSize: 18, color: '#fb923c' }}>
               {formatCurrency(cliente.mora, cliente.moneda)}
-            </p>
+            </H2>
             {mostrarEquivalencia && (
-              <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{moraEq}</p>
+              <TextSmall style={{ marginTop: 4 }}>{moraEq}</TextSmall>
             )}
           </div>
         </div>
 
-        <div style={{
-          background: '#1D9E7510',
-          border: '1px solid #1D9E7530',
-          borderRadius: 10,
-          padding: 16,
-        }}>
-          <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>Total a cobrar</p>
-          <p style={{ fontSize: 30, fontWeight: 700, color: '#34d399', margin: 0 }}>
+        {/* Total a cobrar */}
+        <div style={{ background: '#1D9E7510', border: '1px solid #1D9E7530', borderRadius: 10, padding: 16 }}>
+          <TextSmall style={{ marginBottom: 6 }}>Total a cobrar</TextSmall>
+          <H1 style={{ fontSize: 30, color: '#34d399' }}>
             {formatCurrency(cliente.total, cliente.moneda)}
-          </p>
+          </H1>
           {mostrarEquivalencia && (
-            <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{totalEq}</p>
+            <TextSmall style={{ marginTop: 4 }}>{totalEq}</TextSmall>
           )}
         </div>
 
+        {/* Botones */}
         <div style={{ display: 'flex', gap: 10 }}>
           <button
             onClick={() => navigate(`/deudas?deuda=${cliente.deuda_id}`)}
@@ -136,8 +107,7 @@ export function ClienteMayorRiesgoCard({ cliente }: { cliente: ClienteMayorRiesg
             onMouseEnter={e => { e.currentTarget.style.background = '#1e2334' }}
             onMouseLeave={e => { e.currentTarget.style.background = '#2a3045' }}
           >
-            <IconEye size={16} />
-            Ver deuda
+            <IconEye size={16} /> Ver deuda
           </button>
 
           <button
@@ -152,8 +122,7 @@ export function ClienteMayorRiesgoCard({ cliente }: { cliente: ClienteMayorRiesg
             onMouseEnter={e => { e.currentTarget.style.background = '#158f66' }}
             onMouseLeave={e => { e.currentTarget.style.background = '#1D9E75' }}
           >
-            <IconCash size={16} />
-            Registrar pago
+            <IconCash size={16} /> Registrar pago
           </button>
         </div>
       </div>

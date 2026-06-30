@@ -1,5 +1,4 @@
 // frontend/src/components/ui/index.ts
-export { ExchangeRateBadge } from '../../features/dashboard/components/ExchangeRateBadge'
 export { Badge } from './Badge'
 export { Button } from './Button'
 export { Card } from './Card'

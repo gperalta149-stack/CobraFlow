@@ -15,8 +15,8 @@ import type {
 export function useDashboard() {
   const [kpis, setKpis] = useState<KPIs | null>(null)
   const [cotizacion, setCotizacion] = useState<Cotizacion | null>(null)
-  const [alertas, setAlertas] = useState<Alerta[]>([])        // próximas a vencer (backend ya filtró)
-  const [deudasVencidas, setDeudasVencidas] = useState<Alerta[]>([]) // todas las vencidas (backend ya filtró)
+  const [alertas, setAlertas] = useState<Alerta[]>([])
+  const [deudasVencidas, setDeudasVencidas] = useState<Alerta[]>([])
   const [ultimosPagos, setUltimosPagos] = useState<UltimoPago[]>([])
   const [evolucionPagos, setEvolucionPagos] = useState<DatosEvolucionPagos[]>([])
   const [clienteMayorRiesgo, setClienteMayorRiesgo] = useState<ClienteMayorRiesgo | null>(null)
@@ -34,11 +34,10 @@ export function useDashboard() {
           dashboardApi.getPagosPorMes().then(r => r.data).catch(() => [] as DatosEvolucionPagos[]),
         ])
         
-        // El backend ya envía separado: alertas (próximas) y deudasVencidas (todas las vencidas)
         setKpis(dashboardRes.data.kpis)
         setCotizacion(dashboardRes.data.cotizacion)
-        setAlertas(dashboardRes.data.alertas ?? [])              // próximas a vencer (hoy + 7 días)
-        setDeudasVencidas(dashboardRes.data.deudasVencidas ?? []) // todas las vencidas
+        setAlertas(dashboardRes.data.alertas ?? [])
+        setDeudasVencidas(dashboardRes.data.deudasVencidas ?? [])
         setUltimosPagos(dashboardRes.data.ultimosPagos ?? [])
         setClienteMayorRiesgo(dashboardRes.data.clienteMayorRiesgo ?? null)
         setTopClientes(dashboardRes.data.topClientes ?? [])
@@ -55,8 +54,8 @@ export function useDashboard() {
   return {
     kpis,
     cotizacion,
-    alertas,           // próximas a vencer
-    deudasVencidas,    // todas las vencidas
+    alertas,
+    deudasVencidas,
     ultimosPagos,
     evolucionPagos,
     clienteMayorRiesgo,

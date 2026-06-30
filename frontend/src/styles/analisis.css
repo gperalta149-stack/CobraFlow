@@ -1,0 +1,290 @@
+/* frontend/src/styles/analisis.css */
+
+/* ════════════════════════════════════════════════════════════════
+   SOLO LAYOUTS Y ESTRUCTURAS ESPECÍFICAS DE ANÁLISIS
+   Los estilos de cards, textos, colores ya están en theme.css
+   ════════════════════════════════════════════════════════════════ */
+
+/* Contenedor principal - respeta tu diseño */
+.analisis-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SECCIONES - solo el separador visual
+   ════════════════════════════════════════════════════════════════ */
+.analisis-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.analisis-section-header .indicator {
+  width: 3px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.analisis-section-header .indicator-green {
+  background: #1D9E75;
+}
+
+.analisis-section-header .indicator-red {
+  background: #E24B4A;
+}
+
+.analisis-section-header .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.analisis-section-header .subtitle {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.analisis-section-header .line {
+  flex: 1;
+  height: 0.5px;
+  background: #2e3347;
+}
+
+.analisis-section-spacer {
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PERIODO SELECTOR - tu estilo, solo layout
+   ════════════════════════════════════════════════════════════════ */
+.periodo-selector {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 12px 20px;
+  background: #1a1d2e;
+  border-radius: 12px;
+  border: 0.5px solid #2e3347;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.periodo-selector .label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.periodo-selector .label-group .icon-wrap {
+  padding: 6px;
+  background: #1D9E7520;
+  border-radius: 8px;
+  color: #1D9E75;
+  display: flex;
+}
+
+.periodo-selector .label-group .label-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.periodo-selector .buttons-group {
+  display: flex;
+  gap: 4px;
+  background: #0f1117;
+  border-radius: 8px;
+  padding: 3px;
+  flex: 1;
+  min-width: 280px;
+  max-width: none;
+}
+
+.periodo-selector .btn-periodo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.periodo-selector .btn-periodo .icon {
+  opacity: 0.5;
+}
+
+.periodo-selector .btn-periodo.is-active {
+  background: #242938;
+  color: #f0f2f5;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.periodo-selector .btn-periodo.is-active .icon {
+  opacity: 1;
+}
+
+.periodo-selector .btn-periodo:hover:not(.is-active) {
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.periodo-selector .year-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f1117;
+  border-radius: 8px;
+  padding: 3px 3px 3px 10px;
+  border: 0.5px solid #2e3347;
+  flex-shrink: 0;
+}
+
+.periodo-selector .year-group .year-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.periodo-selector .year-group .select-wrapper {
+  position: relative;
+}
+
+.periodo-selector .year-group select {
+  appearance: none;
+  background: #1a1d2e;
+  border: 0.5px solid #2e3347;
+  border-radius: 6px;
+  padding: 5px 28px 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #f0f2f5;
+  outline: none;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.periodo-selector .year-group .select-chevron {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b7280;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   GRIDS - solo distribución
+   ════════════════════════════════════════════════════════════════ */
+.analisis-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.analisis-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.analisis-riesgo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LOADING
+   ════════════════════════════════════════════════════════════════ */
+.analisis-loading {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.analisis-loading .skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.analisis-loading .skeleton-grid .item {
+  background: #242938;
+  border-radius: 12px;
+  height: 115px;
+  opacity: 0.5;
+}
+
+.analisis-loading .skeleton-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.analisis-loading .skeleton-charts .item {
+  background: #242938;
+  border-radius: 12px;
+  height: 280px;
+  opacity: 0.5;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .analisis-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .analisis-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analisis-riesgo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .analisis-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .periodo-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .periodo-selector .buttons-group {
+    min-width: unset;
+  }
+  
+  .analisis-section-header {
+    flex-wrap: wrap;
+  }
+}

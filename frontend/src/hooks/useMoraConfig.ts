@@ -1,3 +1,4 @@
+// frontend/src/hooks/useMoraConfig.ts
 import { useState, useEffect } from 'react'
 import { perfilApi } from '../features/perfil/services/perfilApi'
 import type { MoraConfig } from '../features/perfil/services/perfilApi'
@@ -15,8 +16,16 @@ export function useMoraConfig() {
         const { data } = await perfilApi.getMora()
         cache = data
         setConfig(data)
-      } catch {
-        console.error('Error cargando config mora')
+      } catch (err) {
+        console.error('Error cargando config mora:', err)
+        // ← Fallback: usar configuración por defecto
+        const fallback: MoraConfig = {
+          mora_activa: false,
+          mora_porcentaje: 0,
+          mora_tipo: 'mensual'
+        }
+        cache = fallback
+        setConfig(fallback)
       } finally {
         setLoading(false)
       }

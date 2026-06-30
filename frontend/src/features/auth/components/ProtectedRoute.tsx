@@ -1,13 +1,10 @@
+// frontend/src/features/auth/components/ProtectedRoute.tsx
 import { Navigate, Outlet } from 'react-router-dom'
-import { useState } from 'react'
+import { AppLayout } from '../../../components/layout/layout'
 import { useAuth } from '../context/AuthContext'
-import { Sidebar } from '../../../components/layout/Sidebar'
-import { Navbar } from '../../../components/layout/Navbar'
-import '../../../styles/sidebar.css'
 
 export default function ProtectedRoute() {
   const { token, loading } = useAuth()
-  const [collapsed, setCollapsed] = useState(false)
 
   if (loading) {
     return (
@@ -32,17 +29,8 @@ export default function ProtectedRoute() {
   if (!token) return <Navigate to="/login" replace />
 
   return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#1a1f2e' }}>
-        {/* 1. Sidebar ahora recibe correctamente el estado */}
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(prev => !prev)} />
-
-        {/* 2. El contenedor principal DEBE tener la clase main-content para que el CSS funcione */}
-        <div className={`main-content ${collapsed ? 'collapsed' : ''}`} style={{ flex: 1 }}>
-          <Navbar collapsed={collapsed} />
-          <main style={{ paddingTop: '80px', paddingLeft: '24px', paddingRight: '24px' }}>
-            <Outlet />
-          </main>
-        </div>
-      </div>
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
   )
 }

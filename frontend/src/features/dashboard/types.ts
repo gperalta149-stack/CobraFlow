@@ -33,7 +33,6 @@ export interface KPIs {
   totalRecaudadoMesPasadoConsolidadoARS: number
   variacionMensual: string | null
   
-  // NUEVOS - para la card de Variación mensual
   totalRecaudadoMesPasadoARS?: number
   totalRecaudadoMesPasadoUSD?: number
 }
@@ -96,7 +95,8 @@ export interface DashboardData {
 
 export interface DatosEvolucionPagos {
   mes: string
-  recaudado: number
+  recaudado: number      // ARS
+  recaudadoUSD?: number  // USD (nuevo campo opcional)
 }
 
 export interface DatosComparativa {

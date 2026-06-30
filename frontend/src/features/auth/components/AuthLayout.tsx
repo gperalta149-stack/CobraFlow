@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Círculo decorativo de fondo */}
+        {/* Círculos decorativos de fondo */}
         <div style={{
           position: 'absolute', top: -120, right: -120,
           width: 400, height: 400, borderRadius: '50%',
@@ -39,7 +39,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           pointerEvents: 'none',
         }} />
 
-        {/* Logo y tagline */}
+        {/* Logo */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <div style={{
@@ -68,31 +68,21 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <LoginVideo />
         </div>
 
-        {/* Features rápidas abajo del video */}
+        {/* Frase elegante */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
           marginTop: 24,
-          gap: 16,
+          textAlign: 'center',
+          padding: '12px 20px',
+          borderTop: '0.5px solid rgba(255,255,255,0.06)',
         }}>
-          {[
-            { icon: '📊', text: 'Dashboard' },
-            { icon: '⚠️', text: 'Alertas' },
-            { icon: '💱', text: 'ARS / USD' },
-          ].map((f, i) => (
-            <div key={i} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#1a1d2e',
-              padding: '8px 14px',
-              borderRadius: 8,
-              border: '0.5px solid #2e3347',
-            }}>
-              <span style={{ fontSize: 14 }}>{f.icon}</span>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>{f.text}</span>
-            </div>
-          ))}
+          <p style={{
+            fontSize: 13,
+            color: '#6b7280',
+            letterSpacing: '0.04em',
+            margin: 0,
+          }}>
+            La forma más inteligente de gestionar tus cobranzas
+          </p>
         </div>
       </div>
 

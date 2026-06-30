@@ -2,51 +2,51 @@
 import '../../../styles/filter.css'
 
 interface DeudaQuickFiltersProps {
-  activeFilter: string
-  onFilterChange: (filter: string) => void
+  filtroEstados: string[]
+  setFiltroEstados: (estados: string[]) => void
   counts: {
     todos: number
     activas: number
     vencidas: number
     parciales: number
+    pagadas: number
   }
 }
 
-const filters = [
-  { id: 'todos',     label: 'Todos' },
-  { id: 'activas',   label: 'Activas' },
-  { id: 'vencidas',  label: 'Vencidas' },
-  { id: 'parciales', label: 'Parciales' },
+const SHORTCUTS = [
+  { id: 'todos',     label: 'Todas',       estados: [] as string[] },
+  { id: 'activas',   label: 'Por cobrar',  estados: ['pendiente', 'parcial'] },
+  { id: 'vencidas',  label: 'Vencidas',    estados: ['vencida'] },
+  { id: 'pagadas',   label: 'Pagadas',     estados: ['pagada'] },
 ]
 
-export function DeudaQuickFilters({ activeFilter, onFilterChange, counts }: DeudaQuickFiltersProps) {
+function isActive(shortcutEstados: string[], filtroEstados: string[]): boolean {
+  if (shortcutEstados.length === 0) return filtroEstados.length === 0
+  if (shortcutEstados.length !== filtroEstados.length) return false
+  return shortcutEstados.every(e => filtroEstados.includes(e))
+}
+
+export function DeudaQuickFilters({ filtroEstados, setFiltroEstados, counts }: DeudaQuickFiltersProps) {
   return (
-    <div className="filter-bar" style={{ marginBottom: 16 }}>
-      {filters.map(f => (
-        <button
-          key={f.id}
-          onClick={() => onFilterChange(f.id)}
-          className={`pagos-pill${activeFilter === f.id ? ' is-active' : ''}`}
-        >
-          {f.label}
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 18,
-            height: 16,
-            padding: '0 4px',
-            borderRadius: 8,
-            fontSize: 10,
-            fontWeight: 700,
-            backgroundColor: activeFilter === f.id ? 'rgba(255,255,255,0.2)' : 'var(--bg-hover)',
-            color: activeFilter === f.id ? 'inherit' : 'var(--text-muted)',
-            marginLeft: 2,
-          }}>
-            {counts[f.id as keyof typeof counts]}
-          </span>
-        </button>
-      ))}
+    <div className="filter-group" style={{ display: 'flex', gap: 4 }}>
+      {SHORTCUTS.map(s => {
+        const active = isActive(s.estados, filtroEstados)
+        const count =
+          s.id === 'activas' ? counts.activas :
+          s.id === 'vencidas' ? counts.vencidas :
+          s.id === 'pagadas' ? counts.pagadas :
+          counts.todos
+        return (
+          <button
+            key={s.id}
+            onClick={() => setFiltroEstados(s.estados)}
+            className={`filter-pill-panel${active ? ' is-active' : ''}`}
+          >
+            {s.label}
+            <span className="pill-badge">{count}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

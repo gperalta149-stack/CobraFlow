@@ -1,98 +1,127 @@
-// frontend/src/features/pagos/pages/Pagos.tsx
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { usePagos } from '../hooks/usePagos'
 import { usePagoForm } from '../hooks/usePagoForm'
 import { usePagosMetrics } from '../hooks/usePagosMetrics'
+import { useExportPagos } from '../hooks/useExportPagos'
 import { PagoForm } from '../components/PagoForm'
 import { PagosTable } from '../components/PagosTable'
-import { PagosHeader } from '../components/PagosHeader'
 import { PagosMetrics } from '../components/PagosMetrics'
-import { ClienteSearch } from '../components/ClienteSearch'
+import { PagosFilters } from '../components/PagosFilters'
 import { SlidePanel } from '../../../components/shared/SlidePanel'
 import { PaginationBar } from '../../../components/shared/PaginationBar'
 import { EmptyState } from '../../../components/shared/EmptyState'
 import { Button } from '../../../components/ui/Button'
-import { generarReportePagos } from '../../../utils/pdfGenerator'
-import { clientesApi } from '../../clientes/services/clientesApi'
-import { metodosLabel, metodosEmoji } from '../constants/metodos'
-import type { Cliente } from '../../clientes/types'
-import { IconCash, IconX } from '@tabler/icons-react'
+import { IconCash, IconX, IconFileExport, IconTableExport, IconPlus } from '@tabler/icons-react'
 import { DollarSign } from 'lucide-react'
+import { metodosLabel } from '../constants/metodos'
+import '../../../styles/theme.css'
+import '../../../styles/filter.css'
+import '../../../styles/actions.css'
 
 const ITEMS_PER_PAGE = 5
 type FiltroPeriodo = 'todos' | 'hoy' | '7dias' | 'mes'
 type FiltroMoneda  = 'todos' | 'ARS' | 'USD'
 type FiltroMetodo  = 'todos' | 'efectivo' | 'transferencia' | 'tarjeta_credito' | 'tarjeta_debito' | 'cheque' | 'mercado_pago' | 'otro'
 
-function PagosPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button onClick={onClick} className={`pagos-pill${active ? ' is-active' : ''}`}>{children}</button>
-}
-
 export default function Pagos() {
   const location = useLocation()
   const { pagos, deudas, loading, error, refetchData, loadData } = usePagos()
   const { showForm, form, error: formError, isSubmitting, deudaSeleccionada, cotizacionActual, cargandoCotizacion, handleChange, handleMonedaPagoChange, handleSubmit, handleCancel, openForm } = usePagoForm({ deudas, onSuccess: refetchData })
+  const { exportToCSV, exportToPDF } = useExportPagos()
 
-  const [clientes, setClientes] = useState<Cliente[]>([])
+  // Estados de filtros
   const [buscarCliente, setBuscar] = useState('')
-  const [clienteSelected, setClienteSel] = useState('')
-  const [mostrarSug, setMostrarSug] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [filtroPeriodo, setPeriodo] = useState<FiltroPeriodo>('todos')
   const [filtroMoneda, setMoneda] = useState<FiltroMoneda>('todos')
   const [filtroMetodo, setMetodo] = useState<FiltroMetodo>('todos')
 
   useEffect(() => { if (showForm) handleCancel() }, [location.state?.reset])
-  useEffect(() => { clientesApi.getAll().then(({ data }) => setClientes(data)).catch(console.error) }, [])
-  useEffect(() => { setCurrentPage(1) }, [filtroPeriodo, filtroMoneda, filtroMetodo, clienteSelected])
+  useEffect(() => { setCurrentPage(1) }, [filtroPeriodo, filtroMoneda, filtroMetodo, buscarCliente])
 
+  // Filtrar pagos - incluyendo búsqueda adaptativa por texto y montos
   const pagosFiltrados = useMemo(() => {
     const ahora = new Date()
     const hoy   = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
     const hace7 = new Date(hoy); hace7.setDate(hace7.getDate() - 7)
     const mes   = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+    
     return [...pagos].filter(p => {
-      if (clienteSelected) { const c = clientes.find(c => c.id === clienteSelected); if (p.clientes?.nombre !== `${c?.nombre} ${c?.apellido}`.trim()) return false }
+      // Filtro por período
       const f = new Date(p.fecha_pago)
       if (filtroPeriodo === 'hoy'   && f < hoy)   return false
       if (filtroPeriodo === '7dias' && f < hace7)  return false
       if (filtroPeriodo === 'mes'   && f < mes)    return false
+      
+      // Filtro por moneda
       if (filtroMoneda !== 'todos'  && p.moneda !== filtroMoneda) return false
+      
+      // Filtro por método
       if (filtroMetodo !== 'todos'  && p.metodo_pago !== filtroMetodo) return false
+      
+      // Búsqueda por texto (Cliente, Método, Monto y Divisa unificada)
+      if (buscarCliente.trim()) {
+        const texto = buscarCliente.toLowerCase().trim()
+        
+        // 1. Coincidencia por Cliente
+        const nombreCliente = (p.clientes?.nombre || '').toLowerCase()
+        const coincideCliente = nombreCliente.includes(texto)
+        
+        // 2. Coincidencia por Método de pago
+        const metodoLabelText = p.metodo_pago ? metodosLabel[p.metodo_pago] ?? '' : ''
+        const coincideMetodo = metodoLabelText.toLowerCase().includes(texto)
+        
+        // 3. Coincidencia por Monto y Divisa (Normalizado estricto a minúsculas)
+        const montoNum = p.monto || 0
+        const monedaPlana = (p.moneda || '').toLowerCase() // Convertimos USD/ARS a usd/ars directamente
+        
+        // Formas combinadas para que busque "500 usd" o "usd 500" sin problemas
+        const montoTextoPlano = `${montoNum} ${monedaPlana}`
+        const monedaMontoTextoPlano = `${monedaPlana} ${montoNum}`
+        
+        // Formato visual local con puntos y comas (ej: "1.500")
+        const montoFormateadoLocal = montoNum.toLocaleString('es-AR', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        }).toLowerCase()
+
+        // Formas combinadas localizadas (ej: "1.500 usd" o "usd 1.500")
+        const combinadoLocal1 = `${montoFormateadoLocal} ${monedaPlana}`
+        const combinadoLocal2 = `${monedaPlana} ${montoFormateadoLocal}`
+
+        const coincideMonto = 
+          montoTextoPlano.includes(texto) ||          
+          monedaMontoTextoPlano.includes(texto) ||    
+          montoFormateadoLocal.includes(texto) ||     
+          combinadoLocal1.includes(texto) ||          
+          combinadoLocal2.includes(texto) ||
+          texto.replace(/[^0-9]/g, '') === String(Math.floor(montoNum))
+
+        // Si no cumple ninguna de las 3 condiciones principales, no pasa el filtro
+        if (!coincideCliente && !coincideMetodo && !coincideMonto) {
+          return false
+        }
+      }
+      
       return true
     }).sort((a, b) => new Date(b.fecha_pago).getTime() - new Date(a.fecha_pago).getTime())
-  }, [pagos, clienteSelected, clientes, filtroPeriodo, filtroMoneda, filtroMetodo])
-
-  const clientesFiltrados = useMemo(() => {
-    if (!buscarCliente.trim()) return []
-    const q = buscarCliente.toLowerCase()
-    return clientes.filter(c => `${c.nombre} ${c.apellido}`.toLowerCase().includes(q) || c.dni?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.empresa?.toLowerCase().includes(q)).slice(0, 6)
-  }, [buscarCliente, clientes])
+  }, [pagos, buscarCliente, filtroPeriodo, filtroMoneda, filtroMetodo])
 
   const metrics = usePagosMetrics(pagos, pagosFiltrados)
   const metodosDisp = useMemo(() => Array.from(new Set(pagos.map(p => p.metodo_pago).filter(Boolean))) as FiltroMetodo[], [pagos])
-  const hayFiltros = filtroPeriodo !== 'todos' || filtroMoneda !== 'todos' || filtroMetodo !== 'todos' || !!clienteSelected
+  const hayFiltros = filtroPeriodo !== 'todos' || filtroMoneda !== 'todos' || filtroMetodo !== 'todos' || !!buscarCliente
   const pagosPaginados = useMemo(() => pagosFiltrados.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE), [pagosFiltrados, currentPage])
 
-  const limpiarCliente = () => { setClienteSel(''); setBuscar(''); setMostrarSug(false) }
-  const limpiarTodo    = () => { limpiarCliente(); setPeriodo('todos'); setMoneda('todos'); setMetodo('todos') }
-
-  const exportCSV = () => {
-    if (!pagosFiltrados.length) return
-    const h = ['Fecha','Cliente','Deuda','Monto','Moneda','Monto ARS','Método','Observaciones']
-    const r = pagosFiltrados.map(p => [new Date(p.fecha_pago).toLocaleDateString('es-AR'), p.clientes?.nombre ?? '', p.deudas?.descripcion ?? '', p.monto_original ?? p.monto, p.moneda, p.monto, p.metodo_pago ? (metodosLabel[p.metodo_pago] ?? p.metodo_pago) : '', p.observaciones ?? ''])
-    const csv = [h, ...r].map(row => row.join(',')).join('\n')
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.download = `pagos_${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+  const limpiarTodo = () => { 
+    setBuscar('')
+    setPeriodo('todos')
+    setMoneda('todos')
+    setMetodo('todos')
   }
 
-  const exportPDF = async () => {
-    if (!pagosFiltrados.length) return
-    try { await generarReportePagos(pagosFiltrados) } catch { alert('Error al generar el reporte') }
-  }
+  const handleExportCSV = () => exportToCSV(pagosFiltrados, 'pagos')
+  const handleExportPDF = () => exportToPDF(pagosFiltrados)
 
   if (loading && !pagos.length) return (
     <div className="dark-container animate-pulse space-y-4">
@@ -114,7 +143,18 @@ export default function Pagos() {
 
   return (
     <div className="dark-container">
-      <PagosHeader disabled={!pagosFiltrados.length} onExportCSV={exportCSV} onExportPDF={exportPDF} onNuevoPago={openForm} />
+      {/* Header con botones de exportación */}
+      <div className="action-bar">
+        <button onClick={handleExportCSV} className="btn-export" disabled={!pagosFiltrados.length}>
+          <IconTableExport size={16} /> Excel
+        </button>
+        <button onClick={handleExportPDF} className="btn-export" disabled={!pagosFiltrados.length}>
+          <IconFileExport size={16} /> PDF
+        </button>
+        <button onClick={openForm} className="btn-primary">
+          <IconPlus size={16} /> Registrar pago
+        </button>
+      </div>
 
       <PagosMetrics
         totalARS={metrics.totalARS} totalUSD={metrics.totalUSD} totalFiltrados={pagosFiltrados.length}
@@ -123,46 +163,18 @@ export default function Pagos() {
         ultimoPago={metrics.ultimoPago} ultimoPagoARS={metrics.ultimoPagoARS} ultimoPagoUSD={metrics.ultimoPagoUSD}
       />
 
-      <div className="pagos-filter-panel">
-        <ClienteSearch
-          value={buscarCliente} selected={clienteSelected} sugerencias={clientesFiltrados} mostrar={mostrarSug}
-          onChange={v => { setBuscar(v); setMostrarSug(true); if (!v) setClienteSel('') }}
-          onSelect={c => { setClienteSel(c.id); setBuscar(`${c.nombre} ${c.apellido}`); setMostrarSug(false) }}
-          onClear={limpiarCliente} onFocus={() => setMostrarSug(true)} onBlur={() => setTimeout(() => setMostrarSug(false), 150)}
-        />
-        <div className="pagos-filter-divider" />
-        <div className="pagos-filter-group">
-          <span className="pagos-filter-group-label">Período</span>
-          <div className="pagos-filter-pills">
-            {(['todos','hoy','7dias','mes'] as FiltroPeriodo[]).map(v => (
-              <PagosPill key={v} active={filtroPeriodo === v} onClick={() => setPeriodo(v)}>{{ todos:'Todos', hoy:'Hoy', '7dias':'7 días', mes:'Este mes' }[v]}</PagosPill>
-            ))}
-          </div>
-        </div>
-        <div className="pagos-filter-group">
-          <span className="pagos-filter-group-label">Moneda</span>
-          <div className="pagos-filter-pills">
-            {(['todos','ARS','USD'] as FiltroMoneda[]).map(v => (
-              <PagosPill key={v} active={filtroMoneda === v} onClick={() => setMoneda(v)}>{{ todos:'Todas', ARS:'🇦🇷 ARS', USD:'🇺🇸 USD' }[v]}</PagosPill>
-            ))}
-          </div>
-        </div>
-        {metodosDisp.length > 0 && (
-          <div className="pagos-filter-group">
-            <span className="pagos-filter-group-label">Método</span>
-            <div className="pagos-filter-pills">
-              <PagosPill active={filtroMetodo === 'todos'} onClick={() => setMetodo('todos')}>Todos</PagosPill>
-              {metodosDisp.map(m => <PagosPill key={m} active={filtroMetodo === m} onClick={() => setMetodo(m)}>{metodosEmoji[m]} {metodosLabel[m] ?? m}</PagosPill>)}
-            </div>
-          </div>
-        )}
-        {hayFiltros && (
-          <div className="pagos-filter-footer">
-            <span className="pagos-filter-results"><strong>{pagosFiltrados.length}</strong> resultado{pagosFiltrados.length !== 1 ? 's' : ''}</span>
-            <button className="pagos-filter-clear" onClick={limpiarTodo}><IconX size={12} /> Limpiar filtros</button>
-          </div>
-        )}
-      </div>
+      {/* Filtros simplificados */}
+      <PagosFilters
+        buscarCliente={buscarCliente}
+        filtroPeriodo={filtroPeriodo}
+        filtroMoneda={filtroMoneda}
+        filtroMetodo={filtroMetodo}
+        metodosDisponibles={metodosDisp}
+        onBuscar={setBuscar}
+        onPeriodo={setPeriodo}
+        onMoneda={setMoneda}
+        onMetodo={setMetodo}
+      />
 
       {!pagosFiltrados.length && !loading ? (
         <EmptyState
