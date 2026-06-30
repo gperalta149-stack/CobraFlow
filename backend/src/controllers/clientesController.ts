@@ -3,6 +3,14 @@ import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
 
 // ============================================
+// SANITIZADOR PARA BÚSQUEDA
+// Escapa caracteres que rompen la sintaxis del filtro .or() de PostgREST
+// ============================================
+const sanitizarBusqueda = (texto: string): string => {
+  return texto.replace(/[,()]/g, '')
+}
+
+// ============================================
 // OBTENER TODOS LOS CLIENTES (solo activos)
 // ============================================
 export const getClientes = async (req: AuthRequest, res: Response) => {
@@ -27,8 +35,9 @@ export const getClientes = async (req: AuthRequest, res: Response) => {
       .range(offset, offset + limitNum - 1)
 
     if (buscar) {
+      const buscarSeguro = sanitizarBusqueda(buscar as string)
       query = query.or(
-        `nombre.ilike.%${buscar}%,apellido.ilike.%${buscar}%,dni.ilike.%${buscar}%,email.ilike.%${buscar}%`
+        `nombre.ilike.%${buscarSeguro}%,apellido.ilike.%${buscarSeguro}%,dni.ilike.%${buscarSeguro}%,email.ilike.%${buscarSeguro}%`
       )
     }
 
@@ -72,8 +81,9 @@ export const getClientesArchivados = async (req: AuthRequest, res: Response) => 
       .range(offset, offset + limitNum - 1)
 
     if (buscar) {
+      const buscarSeguro = sanitizarBusqueda(buscar as string)
       query = query.or(
-        `nombre.ilike.%${buscar}%,apellido.ilike.%${buscar}%,dni.ilike.%${buscar}%,email.ilike.%${buscar}%`
+        `nombre.ilike.%${buscarSeguro}%,apellido.ilike.%${buscarSeguro}%,dni.ilike.%${buscarSeguro}%,email.ilike.%${buscarSeguro}%`
       )
     }
 
@@ -385,8 +395,9 @@ export const exportClientesToExcel = async (req: AuthRequest, res: Response) => 
       .order('apellido', { ascending: true })
 
     if (buscar) {
+      const buscarSeguro = sanitizarBusqueda(buscar as string)
       query = query.or(
-        `nombre.ilike.%${buscar}%,apellido.ilike.%${buscar}%,dni.ilike.%${buscar}%,email.ilike.%${buscar}%`
+        `nombre.ilike.%${buscarSeguro}%,apellido.ilike.%${buscarSeguro}%,dni.ilike.%${buscarSeguro}%,email.ilike.%${buscarSeguro}%`
       )
     }
 

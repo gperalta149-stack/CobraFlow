@@ -1,3 +1,4 @@
+// frontend/src/features/deudas/types.ts
 export interface Deuda {
   id: string
   descripcion: string
@@ -11,8 +12,10 @@ export interface Deuda {
   moneda: 'ARS' | 'USD'
   cotizacion: number
   monto_original: number
-  numero_factura?: string      
-  observaciones?: string         
+  numero_factura?: string
+  observaciones?: string
+  updated_at?: string
+  monto_mora_acumulada?: number   // ← agregar
 }
 
 export interface DeudaFormData {

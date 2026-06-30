@@ -18,6 +18,7 @@ interface PagosMetricsProps {
   ultimoPagoUSD: number
 }
 
+// ← Asegurar que sea export function (no default)
 export function PagosMetrics({
   totalARS, totalUSD, totalFiltrados,
   mesARS, mesUSD, variacionARS, mesAnteriorNombre,

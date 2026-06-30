@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { useMonedaConfig } from '../../../hooks/useMonedaConfig'
+import { H3, TextSmall, TextMuted } from '../../../components/ui/Typography'
 import type { Alerta } from '../types'
 
 interface AlertasListProps {
@@ -64,28 +65,15 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
   const totalItems = todasAlertas.length
 
   return (
-    <div style={{
-      backgroundColor: '#242938',
-      border: '0.5px solid #2e3347',
-      borderRadius: 12,
-      overflow: 'hidden',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <div style={{
-        padding: '16px 20px',
-        borderBottom: '0.5px solid #2e3347',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ padding: 6, background: '#E24B4A20', borderRadius: 8, color: '#E24B4A', display: 'flex' }}>
+    <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="metric-card-header-spaced" style={{ justifyContent: 'space-between' }}>
+        <div className="metric-card-header" style={{ marginBottom: 0 }}>
+          <div className="metric-card-icon" style={{ background: '#E24B4A20', color: '#E24B4A' }}>
             <IconAlertCircle size={16} />
           </div>
           <div>
-            <h2 style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', margin: 0 }}>Atención inmediata</h2>
-            <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Vencidas y próximas</p>
+            <p className="metric-card-title">Atención inmediata</p>
+            <p className="metric-card-subtitle">Vencidas y próximas</p>
           </div>
         </div>
         {totalItems > 0 && (
@@ -104,8 +92,8 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
         {totalItems === 0 ? (
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
             <IconAlertCircle size={32} style={{ color: '#34d399', marginBottom: 12 }} />
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', marginBottom: 4 }}>Todo al día</p>
-            <p style={{ fontSize: 11, color: '#6b7280' }}>Sin deudas pendientes</p>
+            <H3 style={{ marginBottom: 4 }}>Todo al día</H3>
+            <TextMuted>Sin deudas pendientes</TextMuted>
           </div>
         ) : (
           todasAlertas.map((a, idx) => {
@@ -136,9 +124,7 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>
-                      {a.clientes.nombre}
-                    </span>
+                    <H3 style={{ fontSize: 13 }}>{a.clientes.nombre}</H3>
                     <span style={{
                       fontSize: 10, fontWeight: 600,
                       background: `${color}20`, color,
@@ -147,30 +133,29 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
                       {label}
                     </span>
                   </div>
-                  <p style={{
-                    fontSize: 11, color: '#6b7280',
-                    margin: '6px 0 0',
+                  <TextMuted style={{
+                    fontSize: 11, marginTop: 6,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {a.descripcion}
-                  </p>
+                  </TextMuted>
                 </div>
+
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{
-                    fontSize: 14, fontWeight: 600,
+                  <H3 style={{
+                    fontSize: 14,
                     color: esVencida ? '#f87171' : '#f0f2f5',
-                    margin: 0,
                   }}>
                     {fmtMonto(saldo, a.moneda, cotizDeuda)}
-                  </p>
+                  </H3>
                   {mostrarEquivalencia && (
-                    <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                    <TextSmall style={{ marginTop: 2 }}>
                       {fmtEquivalencia(saldo, a.moneda, cotizDeuda)}
-                    </p>
+                    </TextSmall>
                   )}
-                  <p style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>
+                  <TextSmall style={{ marginTop: 2 }}>
                     {formatDateCorta(a.fecha_vencimiento)}
-                  </p>
+                  </TextSmall>
                 </div>
               </div>
             )

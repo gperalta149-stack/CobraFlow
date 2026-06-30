@@ -1,3 +1,4 @@
+// frontend/src/features/dashboard/pages/Dashboard.tsx
 import { useDashboard } from '../hooks/useDashboard'
 import { StatsCards } from '../components/StatsCards'
 import { AlertasList } from '../components/AlertasList'
@@ -55,7 +56,6 @@ export default function Dashboard() {
   }
 
   return (
-    /* CAMBIO AQUÍ: Se cambió 'height' por 'minHeight' para que el contenedor crezca con las tarjetas */
     <div style={{ minHeight: 'calc(100vh - 70px)', padding: '24px', boxSizing: 'border-box' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
 

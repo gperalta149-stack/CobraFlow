@@ -1,27 +1,51 @@
 // frontend/src/features/home/components/HowItWorks.tsx
-const STEPS = [
-  { n: '1', title: 'Creás tus clientes', desc: 'Registrá tu cartera de clientes en minutos con toda su información.' },
-  { n: '2', title: 'Registrás deudas', desc: 'Cargá las deudas con montos, fechas y monedas. ARS o USD.' },
-  { n: '3', title: 'Controlás pagos', desc: 'Gestioná cobros y seguí el estado en tiempo real con alertas automáticas.' },
+import { H3, TextMuted } from '../../../components/ui/Typography'
+import { SectionHeader } from './SectionHeader'
+
+interface Step {
+  n: string
+  title: string
+  desc: string
+}
+
+const STEPS: Step[] = [
+  {
+    n: '1',
+    title: 'Creás tus clientes',
+    desc: 'Registrá tu cartera de clientes en minutos con toda su información de contacto y datos de pago.',
+  },
+  {
+    n: '2',
+    title: 'Registrás deudas',
+    desc: 'Cargá las deudas con montos, fechas y monedas. ARS o USD nativo con tipo de cambio histórico.',
+  },
+  {
+    n: '3',
+    title: 'Controlás pagos',
+    desc: 'Gestioná cobros y seguí el estado en tiempo real con alertas automáticas de vencimiento y mora.',
+  },
 ]
+
+function StepCard({ step }: { step: Step }) {
+  return (
+    <div className="step-card">
+      <div className="step-num">{step.n}</div>
+      <H3 className="step-title" style={{ fontSize: 17 }}>{step.title}</H3>
+      <TextMuted className="step-desc" style={{ fontSize: 14, lineHeight: 1.7 }}>{step.desc}</TextMuted>
+    </div>
+  )
+}
 
 export function HowItWorks() {
   return (
-    <section style={{ padding: '0 48px 64px' }}>
-      <p style={{ fontSize: 10, fontWeight: 700, color: '#1D9E75', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>Cómo funciona</p>
-      <h2 style={{ fontSize: 30, fontWeight: 700, color: '#f0f2f5', textAlign: 'center', marginBottom: 8, letterSpacing: '-0.3px' }}>En 3 pasos simples</h2>
-      <p style={{ fontSize: 14, color: '#6b7280', textAlign: 'center', marginBottom: 40 }}>Empezá a cobrar mejor desde el primer día</p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 900, margin: '0 auto' }}>
-        {STEPS.map((s, i) => (
-          <div key={i} style={{ background: '#1a1d2e', border: '0.5px solid #2e3347', borderRadius: 12, padding: '22px' }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(29,158,117,0.12)', border: '0.5px solid rgba(29,158,117,0.25)', color: '#1D9E75', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              {s.n}
-            </div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5', marginBottom: 8 }}>{s.title}</p>
-            <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>{s.desc}</p>
-          </div>
-        ))}
+    <section className="steps-section">
+      <SectionHeader
+        eyebrow="Cómo funciona"
+        title="En 3 pasos simples"
+        subtitle="Empezá a cobrar mejor desde el primer día"
+      />
+      <div className="steps-grid">
+        {STEPS.map((s, i) => <StepCard key={i} step={s} />)}
       </div>
     </section>
   )

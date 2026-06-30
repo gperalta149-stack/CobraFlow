@@ -1,129 +1,116 @@
-import { useRef, useState, useEffect } from 'react'
+// frontend/src/components/shared/filters/FilterSearch.tsx
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { IconSearch, IconX } from '@tabler/icons-react'
+import '../../../styles/search.css'
 
-interface Suggestion {
+export interface Suggestion {
   id: string
-  label: string      // nombre principal
-  sublabel?: string  // DNI, empresa, etc.
-  initial: string    // letra para el avatar
+  label: string
+  sublabel?: string
+  avatar?: string
 }
 
 interface FilterSearchProps {
   value: string
+  onChange: (value: string) => void
+  onSelect?: (id: string, label: string) => void
+  onClear?: () => void
   placeholder?: string
-  suggestions: Suggestion[]
-  onSearch: (value: string) => void
-  onSelect: (id: string, label: string) => void
-  onClear: () => void
-  selectedId?: string
+  suggestions?: Suggestion[]
+  disabled?: boolean
+  className?: string
+  showClear?: boolean
 }
 
 export function FilterSearch({
-  value, placeholder = 'Buscar...', suggestions,
-  onSearch, onSelect, onClear, selectedId,
+  value,
+  onChange,
+  onSelect,
+  onClear,
+  placeholder = 'Buscar...',
+  suggestions = [],
+  disabled = false,
+  className = '',
+  showClear = true,
 }: FilterSearchProps) {
-  const [open, setOpen] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  // Cerrar al hacer clic fuera
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
-        setOpen(false)
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  return (
-    <div ref={wrapperRef} style={{ position: 'relative' }}>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <IconSearch size={14} style={{
-          position: 'absolute', left: 12,
-          color: 'var(--text-muted)', pointerEvents: 'none',
-        }} />
-        <input
-          type="text"
-          placeholder={placeholder}
-          value={value}
-          onChange={e => { onSearch(e.target.value); setOpen(true) }}
-          onFocus={() => setOpen(true)}
-          style={{
-            width: '100%',
-            padding: '9px 36px',
-            background: 'var(--bg-card)',
-            border: '0.5px solid var(--border-dark)',
-            borderRadius: 10,
-            fontSize: 13,
-            color: 'var(--text-primary)',
-            outline: 'none',
-            transition: 'border-color 0.15s, box-shadow 0.15s',
-          }}
-          onFocusCapture={e => {
-            e.currentTarget.style.borderColor = 'var(--status-pagada)'
-            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(29,158,117,0.15)'
-          }}
-          onBlurCapture={e => {
-            e.currentTarget.style.borderColor = 'var(--border-dark)'
-            e.currentTarget.style.boxShadow = 'none'
-          }}
-        />
-        {(value || selectedId) && (
-          <button
-            onClick={onClear}
-            style={{
-              position: 'absolute', right: 10,
-              background: 'none', border: 'none',
-              cursor: 'pointer', color: 'var(--text-muted)',
-              display: 'flex', alignItems: 'center', padding: 2,
-              borderRadius: 4, transition: 'color 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-          >
-            <IconX size={14} />
-          </button>
-        )}
-      </div>
+  // Filtrar sugerencias basado en el valor
+  const filteredSuggestions = useMemo(() => {
+    if (!value.trim() || !suggestions.length) return []
+    const q = value.toLowerCase()
+    return suggestions
+      .filter(s => 
+        s.label.toLowerCase().includes(q) ||
+        s.sublabel?.toLowerCase().includes(q)
+      )
+      .slice(0, 6)
+  }, [value, suggestions])
 
-      {open && value && suggestions.length > 0 && (
-        <div style={{
-          position: 'absolute', zIndex: 200,
-          top: 'calc(100% + 4px)', left: 0, right: 0,
-          background: 'var(--bg-card)',
-          border: '0.5px solid var(--border-dark)',
-          borderRadius: 10,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-          overflow: 'hidden',
-          animation: 'filter-pop 0.12s ease-out',
-        }}>
-          {suggestions.map(s => (
+  const handleClear = () => {
+    onChange('')
+    onClear?.()
+    setShowSuggestions(false)
+  }
+
+  const handleSelect = (suggestion: Suggestion) => {
+    if (onSelect) {
+      onSelect(suggestion.id, suggestion.label)
+    }
+    onChange(suggestion.label)
+    setShowSuggestions(false)
+  }
+
+  return (
+    <div ref={wrapperRef} className={`search-wrapper ${className}`}>
+      <IconSearch size={14} className="search-icon" />
+      
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setShowSuggestions(true)
+        }}
+        onFocus={() => setShowSuggestions(true)}
+        disabled={disabled}
+        className="search-input"
+      />
+      
+      {showClear && value && (
+        <button onClick={handleClear} className="search-clear">
+          <IconX size={14} />
+        </button>
+      )}
+
+      {showSuggestions && value && filteredSuggestions.length > 0 && (
+        <div className="search-dropdown">
+          {filteredSuggestions.map((s) => (
             <button
               key={s.id}
-              onMouseDown={() => { onSelect(s.id, s.label); setOpen(false) }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: '9px 14px',
-                background: 'transparent', border: 'none',
-                borderBottom: '0.5px solid var(--border-dark)',
-                cursor: 'pointer', textAlign: 'left',
-                transition: 'background 0.1s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              onMouseDown={() => handleSelect(s)}
+              className="search-option"
             >
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: 'rgba(29,158,117,0.15)',
-                color: 'var(--status-pagada)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: 700, flexShrink: 0,
-              }}>
-                {s.initial}
-              </div>
+              {s.avatar && (
+                <div className="search-avatar">{s.avatar}</div>
+              )}
               <div>
-                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{s.label}</p>
+                <p className="search-option-name">{s.label}</p>
                 {s.sublabel && (
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{s.sublabel}</p>
+                  <p className="search-option-sub">{s.sublabel}</p>
                 )}
               </div>
             </button>

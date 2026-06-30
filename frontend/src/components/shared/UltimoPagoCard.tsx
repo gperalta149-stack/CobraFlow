@@ -1,5 +1,6 @@
 // frontend/src/components/shared/UltimoPagoCard.tsx
 import { IconCash } from '@tabler/icons-react'
+import { useMonedaConfig } from '../../hooks/useMonedaConfig'  // ← esta ruta está bien
 
 interface UltimoPagoCardProps {
   clienteNombre: string
@@ -20,6 +21,9 @@ export function UltimoPagoCard({
   clienteNombre, montoARS, montoUSD, moneda,
   fecha, metodoEmoji, metodoLabel,
 }: UltimoPagoCardProps) {
+  const { debeMostrarEquivalencia } = useMonedaConfig()
+  const mostrarEquivalencia = debeMostrarEquivalencia('pagos')
+
   const isUSD = moneda === 'USD'
 
   return (
@@ -55,7 +59,7 @@ export function UltimoPagoCard({
         {clienteNombre}
       </p>
 
-      {/* Monto - con labels ARS/USD en lugar de banderas */}
+      {/* Monto - con equivalencia condicional */}
       <div translate="no" style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 6 }}>
         {isUSD ? (
           <>
@@ -70,7 +74,9 @@ export function UltimoPagoCard({
               </span>
               <span style={{ fontSize: 22, fontWeight: 600, color: '#fbbf24' }}>{fmtUSD(montoUSD)}</span>
             </div>
-            <p style={{ fontSize: 11, color: '#6b7280', marginLeft: 28 }}>≈ {fmtARS(montoARS)}</p>
+            {mostrarEquivalencia && (
+              <p style={{ fontSize: 11, color: '#6b7280', marginLeft: 28 }}>≈ {fmtARS(montoARS)}</p>
+            )}
           </>
         ) : (
           <>
@@ -85,7 +91,7 @@ export function UltimoPagoCard({
               </span>
               <span style={{ fontSize: 22, fontWeight: 600, color: '#60a5fa' }}>{fmtARS(montoARS)}</span>
             </div>
-            {montoUSD > 0 && (
+            {mostrarEquivalencia && montoUSD > 0 && (
               <p style={{ fontSize: 11, color: '#6b7280', marginLeft: 28 }}>≈ {fmtUSD(montoUSD)}</p>
             )}
           </>

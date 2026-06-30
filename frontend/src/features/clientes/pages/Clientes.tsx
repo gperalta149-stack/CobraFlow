@@ -1,17 +1,18 @@
 // frontend/src/features/clientes/pages/Clientes.tsx
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { IconPlus, IconUserCheck, IconUserX, IconUsers } from '@tabler/icons-react'
 import { Button } from '../../../components/ui/Button'
 import { EmptyState } from '../../../components/shared/EmptyState'
 import { SlidePanel } from '../../../components/shared/SlidePanel'
 import { PaginationBar } from '../../../components/shared/PaginationBar'
 import { SearchInput } from '../../../components/ui/SearchInput'
+import { FilterPill } from '../../../components/shared/filters/FilterPill'
 import { ConfirmModal } from '../../../components/shared/ConfirmModal'
 import { ClienteForm } from '../components/ClienteForm'
 import { ClientesTable } from '../components/ClientesTable'
 import { ClientesActions } from '../components/ClientesActions'
 import { ClientesMetrics } from '../components/ClientesMetrics'
-import { ClientesTabs } from '../components/ClientesTabs'
 import { ClienteHistorialPagos } from '../components/modals/ClienteHistorialPagosModal'
 import { ClienteImportModal } from '../components/modals/ClienteImportModal'
 import { ClienteModal } from '../components/modals/ClienteModal'
@@ -19,8 +20,8 @@ import { useClienteArchive } from '../hooks/useClienteArchive'
 import { useClienteForm } from '../hooks/useClienteForm'
 import { useClientes, type ClienteConEstado } from '../hooks/useClientes'
 import { clientesApi } from '../services/clientesApi'
-import { IconUsers, IconPlus } from '@tabler/icons-react'
 import '../../../styles/theme.css'
+import '../../../styles/filter.css'
 
 type TabType = 'activos' | 'archivados'
 
@@ -29,18 +30,18 @@ export default function Clientes() {
   const [activeTab, setActiveTab] = useState<TabType>('activos')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
-  
+
   const activos = useClientes({ tipo: 'activos' })
   const archivados = useClientes({ tipo: 'archivados' })
 
-  const { showForm, editando, form, error: formError, isSubmitting, nombreInputRef, handleChange, handleSubmit, handleEditar, handleNuevoCliente, handleCancel } = useClienteForm({ 
+  const { showForm, editando, form, error: formError, isSubmitting, nombreInputRef, handleChange, handleSubmit, handleEditar, handleNuevoCliente, handleCancel } = useClienteForm({
     onSuccess: () => {
       activos.refetchClientes()
       archivados.refetchClientes()
     }
   })
 
-  const { archivingId, confirmState, handleArchivar, handleRestaurar, confirmAccion, cancelAccion } = useClienteArchive({ 
+  const { archivingId, confirmState, handleArchivar, handleRestaurar, confirmAccion, cancelAccion } = useClienteArchive({
     onSuccess: () => {
       activos.refetchClientes()
       archivados.refetchClientes()
@@ -127,13 +128,13 @@ export default function Clientes() {
 
   return (
     <div className="dark-container">
-      <ClientesActions 
-        onImport={() => setShowImportModal(true)} 
-        onExport={handleExport} 
-        onNuevo={handleNuevoCliente} 
+      <ClientesActions
+        onImport={() => setShowImportModal(true)}
+        onExport={handleExport}
+        onNuevo={handleNuevoCliente}
       />
 
-      <ClientesMetrics 
+      <ClientesMetrics
         totalClientes={activos.totalClientes}
         clientesConDeuda={activos.clientesConDeuda}
         clientesMorosos={clientesMorosos}
@@ -141,12 +142,36 @@ export default function Clientes() {
         totalArchivados={archivados.totalClientes}
       />
 
-      <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
-        <ClientesTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        <div className="w-full max-w-md">
-          <SearchInput 
-            value={currentBuscar} 
-            onChange={setCurrentBuscar} 
+      {/* ── Filtros con FilterPill ── */}
+      <div className="filter-panel">
+        <div className="filter-icon">
+          <IconUsers size={16} />
+        </div>
+
+        <div className="filter-group">
+          <span className="filter-group-label">Estado</span>
+          <div className="filter-pills-group">
+            <FilterPill
+              icon={<IconUserCheck size={14} />}
+              label="Activos"
+              isActive={activeTab === 'activos'}
+              onClick={() => setActiveTab('activos')}
+            />
+            <FilterPill
+              icon={<IconUserX size={14} />}
+              label="Archivados"
+              isActive={activeTab === 'archivados'}
+              onClick={() => setActiveTab('archivados')}
+            />
+          </div>
+        </div>
+
+        <div className="filter-divider" />
+
+        <div className="filter-search">
+          <SearchInput
+            value={currentBuscar}
+            onChange={setCurrentBuscar}
             placeholder="Buscar por nombre, DNI o email..."
             disabled={isLoading}
           />
@@ -176,7 +201,7 @@ export default function Clientes() {
             esArchivados={activeTab === 'archivados'}
           />
           <PaginationBar
-  totalItems={totalItems}
+            totalItems={totalItems}
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             onPageChange={goToPage}
@@ -185,7 +210,7 @@ export default function Clientes() {
         </>
       )}
 
-      {/* SlidePanel con título sin emoji */}
+      {/* SlidePanel */}
       <SlidePanel isOpen={showForm} onClose={handleCancel} title={editando ? 'Editar cliente' : 'Nuevo cliente'}>
         <ClienteForm form={form} editando={editando} error={formError} isSubmitting={isSubmitting} nombreInputRef={nombreInputRef} onChange={handleChange} onSubmit={handleSubmit} onCancel={handleCancel} />
       </SlidePanel>
@@ -218,12 +243,12 @@ export default function Clientes() {
       )}
 
       {showImportModal && (
-        <ClienteImportModal 
-          onClose={() => setShowImportModal(false)} 
-          onSuccess={() => { 
-            activos.refetchClientes(); 
-            archivados.refetchClientes(); 
-          }} 
+        <ClienteImportModal
+          onClose={() => setShowImportModal(false)}
+          onSuccess={() => {
+            activos.refetchClientes()
+            archivados.refetchClientes()
+          }}
         />
       )}
     </div>

@@ -1,4 +1,5 @@
 // frontend/src/components/layout/Sidebar.tsx
+
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../features/auth/context/AuthContext'
 import { useState, useRef, useEffect } from 'react'
@@ -6,11 +7,10 @@ import {
   IconLayoutDashboard, IconUsers, IconFileInvoice, IconCash,
   IconChartBar, IconSettings, IconUser, IconLogout,
   IconChevronUp, IconChevronDown, IconMenu2,
-  IconAlertTriangle, IconCoin,  // ← AGREGAR
+  IconAlertTriangle, IconCoin,
 } from '@tabler/icons-react'
 import '../../styles/sidebar.css'
 
-// ── Tipos ────────────────────────────────────────────────────
 interface NavItemProps {
   to: string
   icon: React.ElementType
@@ -31,7 +31,6 @@ interface SidebarProps {
   onToggle: () => void
 }
 
-// ── NavItem ──────────────────────────────────────────────────
 function NavItem({ to, icon: Icon, label, badge, collapsed }: NavItemProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -67,7 +66,6 @@ function NavItem({ to, icon: Icon, label, badge, collapsed }: NavItemProps) {
   )
 }
 
-// ── SubNavItem ──────────────────────────────────────────────
 interface SubNavItemProps {
   to: string
   icon: React.ElementType
@@ -109,12 +107,17 @@ function SubNavItem({ to, icon: Icon, label, collapsed, depth = 2 }: SubNavItemP
   )
 }
 
-// ── SectionLabel ─────────────────────────────────────────────
 function SectionLabel({ children }: { children: string }) {
   return <div className="section-label">{children}</div>
 }
 
-// ── UserMenu ─────────────────────────────────────────────────
+// ============================================================
+// ✅ SIDEBAR DIVIDER - Línea separadora
+// ============================================================
+function SidebarDivider() {
+  return <div className="sidebar-divider" />
+}
+
 function UserMenu({ collapsed }: { collapsed: boolean }) {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
@@ -215,23 +218,18 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
   )
 }
 
-// ── Sidebar ──────────────────────────────────────────────────
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation()
-  const isConfiguracion = location.pathname === '/configuracion'
+  const isConfiguracion = location.pathname.startsWith('/configuracion')
   const [configOpen, setConfigOpen] = useState(isConfiguracion)
 
-  // Mantener abierto si estamos en configuración
   useEffect(() => {
-    if (isConfiguracion) {
-      setConfigOpen(true)
-    }
+    if (isConfiguracion) setConfigOpen(true)
   }, [isConfiguracion])
 
   return (
     <>
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
-        {/* Logo */}
         <div className="sidebar-logo">
           {collapsed
             ? <span style={{ fontSize: 20, color: '#1D9E75', fontWeight: 700 }}>C</span>
@@ -244,7 +242,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           }
         </div>
 
-        {/* Nav */}
         <nav className="sidebar-nav">
           <SectionLabel>Principal</SectionLabel>
           <NavItem to="/dashboard" icon={IconLayoutDashboard} label="Dashboard" collapsed={collapsed} />
@@ -253,21 +250,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <NavItem to="/pagos"     icon={IconCash}            label="Pagos"     collapsed={collapsed} />
 
           <SectionLabel>Análisis</SectionLabel>
-          <NavItem to="/analisis"      icon={IconChartBar} label="Análisis"       collapsed={collapsed} />
-          
-          {/* Configuración con sub-ítems */}
+          <NavItem to="/analisis" icon={IconChartBar} label="Análisis" collapsed={collapsed} />
+
+          {/* ✅ LÍNEA SEPARADORA ANTES DE CONFIGURACIÓN */}
+          <SidebarDivider />
+
           {!collapsed ? (
             <>
-              {/* Configuración como item expandible */}
               <div
-                onClick={() => setConfigOpen(!configOpen)}
+                onClick={() => setConfigOpen(o => !o)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '8px 10px', borderRadius: 8,
-                  cursor: 'pointer',
+                  padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
                   background: isConfiguracion ? 'rgba(255,255,255,0.06)' : 'transparent',
-                  transition: 'background 0.15s',
-                  marginTop: 2,
+                  transition: 'background 0.15s', marginTop: 2,
                 }}
                 onMouseEnter={e => { if (!isConfiguracion) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' }}
                 onMouseLeave={e => { if (!isConfiguracion) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -276,31 +272,27 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <span style={{ fontSize: 13, color: isConfiguracion ? '#fff' : 'rgba(255,255,255,0.55)', flex: 1 }}>
                   Configuración
                 </span>
-                {configOpen ? (
-                  <IconChevronUp size={14} style={{ color: 'rgba(255,255,255,0.3)' }} />
-                ) : (
-                  <IconChevronDown size={14} style={{ color: 'rgba(255,255,255,0.3)' }} />
-                )}
+                {configOpen
+                  ? <IconChevronUp size={14} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                  : <IconChevronDown size={14} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                }
               </div>
 
-              {/* Sub-ítems */}
               {configOpen && (
                 <div style={{ marginTop: 2 }}>
-                  <SubNavItem to="/configuracion/mora" icon={IconAlertTriangle} label="Mora" collapsed={collapsed} depth={2} />
-                  <SubNavItem to="/configuracion/moneda" icon={IconCoin} label="Moneda" collapsed={collapsed} depth={2} />
+                  <SubNavItem to="/configuracion/mora"   icon={IconAlertTriangle} label="Mora"   collapsed={collapsed} depth={2} />
+                  <SubNavItem to="/configuracion/moneda" icon={IconCoin}          label="Moneda" collapsed={collapsed} depth={2} />
                 </div>
               )}
             </>
           ) : (
-            // Modo colapsado - solo el icono
-            <NavItem to="/configuracion" icon={IconSettings} label="Configuración" collapsed={collapsed} />
+            <NavItem to="/configuracion/mora" icon={IconSettings} label="Configuración" collapsed={collapsed} />
           )}
         </nav>
 
         <UserMenu collapsed={collapsed} />
       </aside>
 
-      {/* Botón toggle */}
       <button
         onClick={onToggle}
         className={`sidebar-toggle ${collapsed ? 'collapsed' : ''}`}

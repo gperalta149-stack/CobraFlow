@@ -1,3 +1,4 @@
+// frontend/src/features/deudas/services/deudasApi.ts
 import api from '../../../services/api'
 import type { Deuda, Cliente, DeudaFormData } from '../types'
 
@@ -14,11 +15,12 @@ interface DeudaPayload {
 }
 
 export const deudasApi = {
-  // Vista principal: pendientes + parciales + vencidas (excluye pagadas)
+  // Vista principal: trae TODAS las deudas (incluyendo pagadas)
+  // El frontend filtra por estado con filtroEstados
   getAll: (estado?: string) =>
-    api.get<Deuda[]>(`/deudas${estado ? `?estado=${estado}` : ''}`),
+    api.get<Deuda[]>(`/deudas?incluir_pagadas=true${estado ? `&estado=${estado}` : ''}`),
 
-  // Historial: solo deudas pagadas
+  // Historial: solo deudas pagadas (para la vista de historial)
   getHistorial: (cliente_id?: string) =>
     api.get<Deuda[]>(`/deudas/historial${cliente_id ? `?cliente_id=${cliente_id}` : ''}`),
 

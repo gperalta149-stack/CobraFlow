@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000
 
 // Middlewares
 app.use(cors({
-  origin: '*',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: false
 }))
 app.use(express.json())
@@ -31,6 +31,17 @@ app.use('/api/exchange-rate', exchangeRateRoutes)
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'CobraFlow API funcionando' })
+})
+
+// 404 — ruta no encontrada
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' })
+})
+
+// Error handler global — siempre al final, con 4 parámetros
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('❌ Error no manejado:', err)
+  res.status(500).json({ error: 'Error interno del servidor' })
 })
 
 // Iniciar servidor

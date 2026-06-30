@@ -8,6 +8,9 @@ import './styles/animations.css'
 import './styles/table.css'
 import './styles/filter.css'
 import './styles/forms.css'
+import './styles/analisis.css'
+import './styles/search.css'
+import './styles/actions.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

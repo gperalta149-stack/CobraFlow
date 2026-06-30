@@ -1,5 +1,6 @@
 // frontend/src/features/deudas/components/DeudaProximoVencimientoCard.tsx
 import { IconCalendar } from '@tabler/icons-react'
+import { useMonedaConfig } from '../../../hooks/useMonedaConfig'
 
 const fmtARS = (v: number) => `$${Math.round(v).toLocaleString('es-AR')}`
 const fmtUSD = (v: number) =>
@@ -19,6 +20,9 @@ interface DeudaProximoVencimientoCardProps {
 }
 
 export function DeudaProximoVencimientoCard({ proximoVencimiento, cotizacionActual }: DeudaProximoVencimientoCardProps) {
+  const { debeMostrarEquivalencia } = useMonedaConfig()
+  const mostrarEquivalencia = debeMostrarEquivalencia('deudas')
+
   const proxIsUSD = proximoVencimiento?.moneda === 'USD'
   const proxCotiz = Number(proximoVencimiento?.cotizacion) || cotizacionActual
   const proxSaldo = Number(proximoVencimiento?.saldo_pendiente ?? 0)
@@ -52,9 +56,11 @@ export function DeudaProximoVencimientoCard({ proximoVencimiento, cotizacionActu
                 {proxIsUSD ? fmtUSD(proxUSD) : fmtARS(proxARS)}
               </p>
             </div>
-            <p style={{ fontSize: 11, color: '#6b7280', marginLeft: 28 }}>
-              ≈ {proxIsUSD ? fmtARS(proxSaldo) : fmtUSD(proxSaldo / cotizacionActual)}
-            </p>
+            {mostrarEquivalencia && (
+              <p style={{ fontSize: 11, color: '#6b7280', marginLeft: 28 }}>
+                ≈ {proxIsUSD ? fmtARS(proxSaldo) : fmtUSD(proxSaldo / cotizacionActual)}
+              </p>
+            )}
           </div>
         </>
       ) : (

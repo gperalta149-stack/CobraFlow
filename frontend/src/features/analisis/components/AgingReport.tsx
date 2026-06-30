@@ -1,11 +1,15 @@
 // frontend/src/features/analisis/components/AgingReport.tsx
-import type { AgingData } from '../hooks/useAnalisis'
+import { useMonedaConfig } from '../../../hooks/useMonedaConfig'
+import type { AgingData } from '../types'  // ← CAMBIAR: importar desde types, no desde useAnalisis
 
 interface AgingReportProps {
   data: AgingData[]
 }
 
 export function AgingReport({ data }: AgingReportProps) {
+  const { debeMostrarEquivalencia, cotizacion } = useMonedaConfig()
+  const mostrarEquivalencia = debeMostrarEquivalencia('analisis')
+
   if (!data.length) {
     return (
       <div style={{ textAlign: 'center', padding: '12px 0' }}>
@@ -25,16 +29,33 @@ export function AgingReport({ data }: AgingReportProps) {
     }
   })
 
+  // Función para formatear con equivalencia
+  const fmtMontoConEquivalencia = (monto: number, moneda: 'ARS' | 'USD') => {
+    if (moneda === 'USD') {
+      const arsEq = monto * cotizacion
+      return {
+        principal: `USD ${monto.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        secundario: mostrarEquivalencia ? `≈ $${Math.round(arsEq).toLocaleString('es-AR')}` : null
+      }
+    } else {
+      const usdEq = monto / cotizacion
+      return {
+        principal: `$${Math.round(monto).toLocaleString('es-AR')}`,
+        secundario: mostrarEquivalencia ? `≈ USD ${usdEq.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : null
+      }
+    }
+  }
+
   return (
     <div>
-      {/* ELIMINAR ESTE TÍTULO DUPLICADO */}
-      {/* <h3 style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', marginBottom: 16 }}>Antigüedad de deuda</h3> */}
-      
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {data.map((item) => {
           const isMax = item.tramo === maxTramo
           const hasARS = item.montoARS > 0
           const hasUSD = item.montoUSD > 0
+
+          const arsFormatted = fmtMontoConEquivalencia(item.montoARS, 'ARS')
+          const usdFormatted = fmtMontoConEquivalencia(item.montoUSD, 'USD')
 
           return (
             <div key={item.tramo}>
@@ -55,20 +76,33 @@ export function AgingReport({ data }: AgingReportProps) {
                     </span>
                   )}
                 </span>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                  {hasARS && (
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#60a5fa' }}>
-                      {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(item.montoARS)}
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                    {hasARS && (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#60a5fa' }}>
+                        {arsFormatted.principal}
+                      </span>
+                    )}
+                    {!hasARS && hasUSD && <span style={{ fontSize: 13, color: '#6b7280' }}>—</span>}
+                    
+                    {hasUSD && (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#fbbf24' }}>
+                        {usdFormatted.principal}
+                      </span>
+                    )}
+                    {!hasUSD && hasARS && <span style={{ fontSize: 13, color: '#6b7280' }}>—</span>}
+                  </div>
+                  {/* Equivalencias */}
+                  {mostrarEquivalencia && (
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 10, color: '#6b7280' }}>
+                      {hasARS && arsFormatted.secundario && (
+                        <span>{arsFormatted.secundario}</span>
+                      )}
+                      {hasUSD && usdFormatted.secundario && (
+                        <span>{usdFormatted.secundario}</span>
+                      )}
+                    </div>
                   )}
-                  {!hasARS && hasUSD && <span style={{ fontSize: 13, color: '#6b7280' }}>—</span>}
-                  
-                  {hasUSD && (
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#fbbf24' }}>
-                      {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.montoUSD)}
-                    </span>
-                  )}
-                  {!hasUSD && hasARS && <span style={{ fontSize: 13, color: '#6b7280' }}>—</span>}
                 </div>
               </div>
               <div style={{

@@ -18,24 +18,26 @@
 
 .sidebar.collapsed { width: 64px; }
 
-/* Logo */
+/* Logo — altura fija en lugar de min-height */
 .sidebar-logo {
-  padding: 16px 18px 14px;  /* ← ajustado para coincidir con navbar height */
-  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  padding: 0 18px;
+  border-bottom: 0.5px solid #2e3347;
   overflow: hidden;
   white-space: nowrap;
-  min-height: 58px;  /* ← misma altura que navbar */
+  height: 64px;          /* ← fijo, era min-height: 58px con padding que daba ~66px */
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.sidebar.collapsed .sidebar-logo { 
-  padding: 16px 0 14px; 
-  display: flex; 
-  justify-content: center; 
+.sidebar.collapsed .sidebar-logo {
+  padding: 0;
+  height: 64px;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  min-height: 58px;
+  flex-shrink: 0;
 }
 
 .sidebar-logo-title {
@@ -123,10 +125,10 @@
 .sidebar.collapsed .nav-label { display: none; }
 .sidebar.collapsed .nav-badge { display: none; }
 
-/* Toggle button */
+/* Toggle button — reposicionar para centrar en 64px */
 .sidebar-toggle {
   position: fixed;
-  top: 16px;
+  top: 19px;             /* ← (64px - 26px) / 2 = 19px */
   left: 226px;
   width: 26px;
   height: 26px;
@@ -160,13 +162,13 @@
 
 .main-content.collapsed { margin-left: 64px; }
 
-/* Navbar - alineado con sidebar */
+/* Navbar — misma altura que sidebar-logo */
 .navbar {
   position: fixed;
   top: 0;
   left: 240px;
   right: 0;
-  height: 58px;  /* ← misma altura que sidebar-logo */
+  height: 64px;          /* ← era 58px */
   background: #1e2334;
   border-bottom: 0.5px solid #2e3347;
   z-index: 40;
@@ -190,3 +192,19 @@
 .sidebar.collapsed .user-chevron { display: none; }
 .sidebar.collapsed .user-avatar { margin: 0 auto; }
 .sidebar.collapsed .user-menu { display: flex; justify-content: center; padding: 8px 0; }
+
+
+/* frontend/src/styles/sidebar.css */
+
+/* ============================================================
+   SIDEBAR DIVIDER - Línea separadora
+   ============================================================ */
+.sidebar-divider {
+  height: 0.5px;
+  background-color: rgba(255, 255, 255, 0.08);
+  margin: 10px 16px;
+}
+
+.sidebar.collapsed .sidebar-divider {
+  margin: 10px 12px;
+}
