@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { pagosApi } from '../services/pagosApi'
 import { handleApiError } from '../../../utils/handleApiError'
-import { fetchCurrentExchangeRate } from '../../../hooks/useExchangeRate'
+import { useExchangeRate } from '../../../hooks/useExchangeRate'
 import type { PagoFormData, Deuda } from '../types'
 
 interface UsePagoFormProps {
@@ -23,19 +23,10 @@ export function usePagoForm({ deudas, onSuccess }: UsePagoFormProps) {
   const [form, setForm] = useState<PagoFormData>(initialForm)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [cotizacionActual, setCotizacionActual] = useState(0)
-  const [cargandoCotizacion, setCargandoCotizacion] = useState(true)
 
-  // Carga al montar — no espera a que se abra el form
-  useEffect(() => {
-    const load = async () => {
-      setCargandoCotizacion(true)
-      const rate = await fetchCurrentExchangeRate()
-      setCotizacionActual(rate)
-      setCargandoCotizacion(false)
-    }
-    load()
-  }, [])
+  // Cotización única del sistema (guardada en BD, actualizada por el cron del backend)
+  const { rate, loading: cargandoCotizacion } = useExchangeRate()
+  const cotizacionActual = rate?.venta || 0
 
   // Cuando cambia la deuda seleccionada
   useEffect(() => {

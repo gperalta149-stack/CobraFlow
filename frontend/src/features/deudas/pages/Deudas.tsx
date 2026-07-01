@@ -7,10 +7,14 @@ import {
   IconAlertCircle, 
   IconAdjustmentsHorizontal,
   IconFileExport,
-  IconTableExport
+  IconTableExport,
+  IconX
 } from '@tabler/icons-react'
+import { DollarSign } from 'lucide-react'
 import { SlidePanel } from '../../../components/shared/SlidePanel'
 import { SearchInput } from '../../../components/ui/SearchInput'
+import { EmptyState } from '../../../components/shared/EmptyState'
+import { Button } from '../../../components/ui/Button'
 import { DeudaMetricCard } from '../components/DeudaMetricCard'
 import { DeudaMoraCard } from '../components/DeudaMoraCard'
 import { DeudaFilters } from '../components/DeudaFilters'
@@ -110,6 +114,8 @@ export default function Deudas() {
     )
   }
 
+  const hayFiltros = hayFiltrosActivos || searchTerm !== ''
+
   return (
     <div className="dark-container">
 
@@ -205,23 +211,54 @@ export default function Deudas() {
         </div>
       </div>
 
-      {/* Tabla con datos paginados */}
-      <DeudasTable
-        deudas={deudasPaginadas}
-        hayFiltrosActivos={hayFiltrosActivos || searchTerm !== ''}
-        onLimpiarFiltros={() => { limpiarFiltros(); setSearchTerm('') }}
-        cotizacion={cotizacionActual}
-      />
+      {/* Tabla con datos paginados o EmptyState */}
+      {filteredDeudas.length === 0 && !loading ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <EmptyState
+            variant="minimal"
+            title={hayFiltros ? "Sin resultados" : "No hay deudas"}
+            description={
+              hayFiltros 
+                ? "Ninguna deuda coincide con los filtros aplicados" 
+                : "Creá tu primera deuda para comenzar"
+            }
+            icon={<DollarSign size={40} />}
+            action={
+              hayFiltros ? (
+                <Button 
+                  variant="dark" 
+                  onClick={() => { limpiarFiltros(); setSearchTerm('') }}
+                >
+                  <IconX size={16} /> Limpiar filtros
+                </Button>
+              ) : (
+                <Button variant="dark-primary" onClick={openForm}>
+                  <IconPlus size={16} /> Crear primera deuda
+                </Button>
+              )
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <DeudasTable
+            deudas={deudasPaginadas}
+            hayFiltrosActivos={hayFiltros}
+            onLimpiarFiltros={() => { limpiarFiltros(); setSearchTerm('') }}
+            cotizacion={cotizacionActual}
+          />
 
-      {/* Paginación */}
-      {filteredDeudas.length > 0 && (
-        <PaginationBar
-          totalItems={filteredDeudas.length}
-          currentPage={currentPage}
-          itemsPerPage={ITEMS_PER_PAGE}
-          onPageChange={setCurrentPage}
-          itemLabel="deuda"
-        />
+          {/* Paginación */}
+          {filteredDeudas.length > 0 && (
+            <PaginationBar
+              totalItems={filteredDeudas.length}
+              currentPage={currentPage}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+              itemLabel="deuda"
+            />
+          )}
+        </>
       )}
 
       <SlidePanel isOpen={showForm} onClose={handleCancel} title="Nueva deuda">

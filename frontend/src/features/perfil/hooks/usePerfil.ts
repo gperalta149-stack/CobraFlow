@@ -8,6 +8,7 @@ export function usePerfil() {
   const { usuario, login, token } = useAuth()
   const [formPerfil, setFormPerfil] = useState<PerfilFormData>({
     nombre: usuario?.nombre || '',
+    apellido: usuario?.apellido || '',
     email: usuario?.email || ''
   })
   const [exito, setExito] = useState('')

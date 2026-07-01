@@ -179,36 +179,39 @@ export default function Clientes() {
       </div>
 
       {clientesPaginados.length === 0 && !isLoading ? (
-        <EmptyState
-          title={activeTab === 'activos' ? "No hay clientes" : "No hay clientes archivados"}
-          description={activeTab === 'activos' ? "Creá tu primer cliente para comenzar" : "Los clientes que archives aparecerán aquí"}
-          icon={<IconUsers size={40} />}
-          action={activeTab === 'activos' ? (
-            <Button variant="dark-primary" onClick={handleNuevoCliente}>
-              <IconPlus size={16} /> Crear primer cliente
-            </Button>
-          ) : undefined}
-        />
-      ) : (
-        <>
-          <ClientesTable
-            clientes={clientesPaginados}
-            onVer={setClienteSeleccionado}
-            onEditar={handleEditar}
-            onArchivar={handleArchivar}
-            onRestaurar={handleRestaurar}
-            archivingId={archivingId}
-            esArchivados={activeTab === 'archivados'}
-          />
-          <PaginationBar
-            totalItems={totalItems}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            onPageChange={goToPage}
-            itemLabel="cliente"
-          />
-        </>
-      )}
+  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <EmptyState
+      variant="minimal"
+      title={activeTab === 'activos' ? "No hay clientes" : "No hay clientes archivados"}
+      description={activeTab === 'activos' ? "Creá tu primer cliente para comenzar" : "Los clientes que archives aparecerán aquí"}
+      icon={<IconUsers size={40} />}
+      action={activeTab === 'activos' ? (
+        <Button variant="dark-primary" onClick={handleNuevoCliente}>
+          <IconPlus size={16} /> Crear primer cliente
+        </Button>
+      ) : undefined}
+    />
+  </div>
+) : (
+  <>
+    <ClientesTable
+      clientes={clientesPaginados}
+      onVer={setClienteSeleccionado}
+      onEditar={handleEditar}
+      onArchivar={handleArchivar}
+      onRestaurar={handleRestaurar}
+      archivingId={archivingId}
+      esArchivados={activeTab === 'archivados'}
+    />
+    <PaginationBar
+      totalItems={totalItems}
+      currentPage={currentPage}
+      itemsPerPage={itemsPerPage}
+      onPageChange={goToPage}
+      itemLabel="cliente"
+    />
+  </>
+)}
 
       {/* SlidePanel */}
       <SlidePanel isOpen={showForm} onClose={handleCancel} title={editando ? 'Editar cliente' : 'Nuevo cliente'}>

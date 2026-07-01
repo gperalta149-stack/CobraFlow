@@ -4,6 +4,7 @@ import { deudasApi } from '../services/deudasApi'
 import { handleApiError } from '../../../utils/handleApiError'
 import { calcularMora } from '../../../lib/calcularMora'
 import { useMoraConfig } from '../../../hooks/useMoraConfig'
+import { useExchangeRate } from '../../../hooks/useExchangeRate'
 import type { Deuda, Cliente } from '../types'
 
 export function useDeudas() {
@@ -11,7 +12,10 @@ export function useDeudas() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [cotizacionActual, setCotizacionActual] = useState<number>(1455)
+
+  // Cotización única del sistema (guardada en BD, actualizada por el cron del backend)
+  const { rate } = useExchangeRate()
+  const cotizacionActual = rate?.venta || 1455
 
   const { config: moraConfig } = useMoraConfig()
 
@@ -21,13 +25,6 @@ export function useDeudas() {
   const [filtroMontoMin, setFiltroMontoMin]       = useState('')
   const [filtroMontoMax, setFiltroMontoMax]       = useState('')
   const [filtroMonedaMonto, setFiltroMonedaMonto] = useState<'ARS' | 'USD'>('ARS')
-
-  useEffect(() => {
-    fetch('/api/exchange-rate')
-      .then(r => r.json())
-      .then(d => { if (Number(d.venta) > 0) setCotizacionActual(Number(d.venta)) })
-      .catch(() => {})
-  }, [])
 
   const fetchDeudas = useCallback(async () => {
     const { data } = await deudasApi.getAll()

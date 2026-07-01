@@ -64,6 +64,20 @@ export function PerfilForm({ form, error, exito, isSubmitting, rol, onChange, on
       </div>
 
       <div>
+        <label style={labelStyle}>Apellido</label>
+        <input
+          name="apellido"
+          value={form.apellido}
+          onChange={onChange}
+          style={inputStyle}
+          required
+          disabled={isSubmitting}
+          onFocus={e => (e.target.style.borderColor = '#1D9E75')}
+          onBlur={e => (e.target.style.borderColor = '#2e3347')}
+        />
+      </div>
+
+      <div>
         <label style={labelStyle}>Email</label>
         <input
           type="email"
