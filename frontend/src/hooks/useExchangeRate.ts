@@ -39,26 +39,3 @@ export const useExchangeRate = () => {
 
   return { rate, loading, error }
 }
-
-// Función para obtener cotización actual (para usar en formularios)
-export const fetchCurrentExchangeRate = async (): Promise<number> => {
-  try {
-    const response = await fetch(
-      'https://dolarapi.com/v1/dolares/blue'
-    )
-
-    if (!response.ok) {
-      throw new Error('No se pudo obtener la cotización')
-    }
-
-    const data = await response.json()
-
-    return Number(data.venta)
-
-  } catch (error) {
-    console.error(error)
-
-    // respaldo si la API falla
-    return 1430
-  }
-}

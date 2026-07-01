@@ -153,7 +153,7 @@ export function DeudasTable({
                 <th style={{ cursor: 'pointer' }} onClick={() => handleSort('fecha')}>
                   VENCIMIENTO{getSortIcon('fecha')}
                 </th>
-                <th style={{ cursor: 'pointer' }} onClick={() => handleSort('estado')}>
+                <th style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('estado')}>
                   ESTADO{getSortIcon('estado')}
                 </th>
               </tr>
@@ -196,6 +196,17 @@ export function DeudasTable({
                   mora.tieneMora && !estadoRowClass[d.estado] ? 'row-mora' : '',
                   tieneMultiples ? 'row-cliente-relacionado' : '',
                 ].filter(Boolean).join(' ')
+
+                // Función para obtener la etiqueta del estado
+                const getEstadoLabel = (estado: string) => {
+                  switch (estado) {
+                    case 'pendiente': return 'Pendiente'
+                    case 'parcial': return 'Parcial'
+                    case 'vencida': return 'Vencida'
+                    case 'pagada': return 'Pagada'
+                    default: return estado
+                  }
+                }
 
                 return (
                   <tr key={d.id} className={rowClass}>
@@ -335,6 +346,13 @@ export function DeudasTable({
                           return null
                         })()
                       )}
+                    </td>
+
+                    {/* ✅ ESTADO - Agregado */}
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`status-badge status-${d.estado}`}>
+                        {getEstadoLabel(d.estado)}
+                      </span>
                     </td>
                   </tr>
                 )

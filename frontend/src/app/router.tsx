@@ -9,7 +9,6 @@ import Dashboard from '../features/dashboard/pages/Dashboard'
 import Analisis from '../features/analisis/pages/Analisis'
 import Clientes from '../features/clientes/pages/Clientes'
 import Deudas from '../features/deudas/pages/Deudas'
-import HistorialDeudas from '../features/deudas/pages/HistorialDeudas'   // ← agregar
 import Pagos from '../features/pagos/pages/Pagos'
 import Perfil from '../features/perfil/pages/Perfil'
 import Configuracion from '../features/perfil/pages/Configuracion'
@@ -27,7 +26,6 @@ export default function AppRouter() {
           <Route path="/analisis" element={<Analisis />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/deudas" element={<Deudas />} />
-          <Route path="/deudas/historial" element={<HistorialDeudas />} />   {/* ← agregar */}
           <Route path="/pagos" element={<Pagos />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/configuracion" element={<Configuracion />} />

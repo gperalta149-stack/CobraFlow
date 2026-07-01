@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchCurrentExchangeRate } from '../../../hooks/useExchangeRate'
+import { useExchangeRate } from '../../../hooks/useExchangeRate'
 import { handleApiError } from '../../../utils/handleApiError'
 import { deudasApi } from '../services/deudasApi'
 import type { DeudaFormData } from '../types'
@@ -25,23 +25,18 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
   const [form, setForm] = useState<DeudaFormData>(initialForm)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [cotizacionActual, setCotizacionActual] = useState<number>(1200)
-  const [cargandoCotizacion, setCargandoCotizacion] = useState(true)
   const descripcionInputRef = useRef<HTMLTextAreaElement>(null)
 
-  // Cargar cotización desde Supabase al montar
+  // Cotización única del sistema (guardada en BD, actualizada por el cron del backend)
+  const { rate, loading: cargandoCotizacion } = useExchangeRate()
+  const cotizacionActual = rate?.venta || 1200
+
+  // Prefill de cotización cuando llega el valor, si el usuario no la tocó todavía
   useEffect(() => {
-    const loadExchangeRate = async () => {
-      setCargandoCotizacion(true)
-      const rate = await fetchCurrentExchangeRate()
-      setCotizacionActual(rate)
-      setCargandoCotizacion(false)
-      if (form.moneda === 'USD' && !form.cotizacion) {
-        setForm(prev => ({ ...prev, cotizacion: rate.toString() }))
-      }
+    if (!cargandoCotizacion && form.moneda === 'USD' && !form.cotizacion) {
+      setForm(prev => ({ ...prev, cotizacion: cotizacionActual.toString() }))
     }
-    loadExchangeRate()
-  }, [])
+  }, [cargandoCotizacion, cotizacionActual])
 
   // Actualizar monto_total automáticamente
   useEffect(() => {
@@ -83,8 +78,6 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
     e.preventDefault()
     setError('')
     setIsSubmitting(true)
-    console.log('🔥 handleSubmit ejecutado', e) // ← agregá esto
-      e.preventDefault()
 
     try {
       if (!form.cliente_id) {

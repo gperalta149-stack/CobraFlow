@@ -2,6 +2,7 @@
 
 export interface PerfilFormData {
   nombre: string
+  apellido: string
   email: string
 }
 
@@ -32,3 +33,4 @@ export interface MonedaConfig {
   moneda_principal: 'ARS' | 'USD'
   mostrar_equivalencia: boolean
 }
+
