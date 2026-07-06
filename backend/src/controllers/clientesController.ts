@@ -16,8 +16,8 @@ export const getClientes = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' })
     }
 
-    const pageNum = parseInt(page as string)
-    const limitNum = parseInt(limit as string)
+    const pageNum = Math.max(1, parseInt(page as string) || 1)
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit as string) || 10))
     const offset = (pageNum - 1) * limitNum
 
     let query = supabase
@@ -57,8 +57,8 @@ export const getClientesArchivados = async (req: AuthRequest, res: Response) => 
       return res.status(401).json({ error: 'Usuario no autenticado' })
     }
 
-    const pageNum = parseInt(page as string)
-    const limitNum = parseInt(limit as string)
+    const pageNum = Math.max(1, parseInt(page as string) || 1)
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit as string) || 10))
     const offset = (pageNum - 1) * limitNum
 
     let query = supabase

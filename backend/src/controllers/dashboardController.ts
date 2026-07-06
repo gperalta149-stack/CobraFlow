@@ -4,6 +4,7 @@ import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
 import { actualizarMoraAcumulada } from './deudasController'
 
+
 const actualizarVencidas = async () => {
   await supabase.rpc('actualizar_deudas_vencidas')
 }
@@ -189,7 +190,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 
       supabase
         .from('deudas')
-        .select('id, descripcion, fecha_vencimiento, saldo_pendiente, moneda, cotizacion, clientes(nombre), cliente_id')
+        .select('id, descripcion, fecha_vencimiento, saldo_pendiente, monto_mora_acumulada, moneda, cotizacion, clientes(nombre), cliente_id')
         .eq('usuario_id', usuario_id)
         .eq('activo', true)
         .eq('estado', 'vencida')
@@ -223,7 +224,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 
       supabase
         .from('deudas')
-        .select('cliente_id, saldo_pendiente, moneda, cotizacion, estado, fecha_vencimiento, clientes(nombre)')
+        .select('cliente_id, saldo_pendiente, monto_mora_acumulada, moneda, cotizacion, estado, fecha_vencimiento, clientes(nombre)')
         .eq('usuario_id', usuario_id)
         .eq('activo', true)
         .neq('estado', 'pagada'),
@@ -234,6 +235,16 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
         .eq('id', usuario_id)
         .single(),
     ])
+
+    // ── Mora ──────────────────────────────────────────────────
+    // Si la mora está desactivada, no se muestra aunque haya quedado
+    // un monto_mora_acumulada viejo persistido de cuando estaba activa.
+    const moraActiva = !!moraConfigData?.mora_activa
+
+    const vencidasConMora = (vencidasRaw ?? []).map(d => ({
+      ...d,
+      monto_mora_acumulada: moraActiva ? Number(d.monto_mora_acumulada ?? 0) : 0,
+    }))
 
     // ── KPIs de conteo ────────────────────────────────────────
     const totalDeudas = deudas?.length || 0
@@ -392,6 +403,8 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       cliente_id: string
       saldo_pendiente: number
       saldo_pendiente_usd: number
+      mora_acumulada: number
+      mora_acumulada_usd: number
       moneda: string
       cotizacion: number
       clientes: { nombre: string }
@@ -406,8 +419,10 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       if (!clienteId) continue
 
       const saldo = Number(d.saldo_pendiente)
+      const mora = moraActiva ? Number(d.monto_mora_acumulada ?? 0) : 0
       const cotiz = Number(d.cotizacion) || cotizacionVigente
       const saldoUSD = d.moneda === 'USD' ? saldo / cotiz : saldo / cotizacionVigente
+      const moraUSD = d.moneda === 'USD' ? mora / cotiz : mora / cotizacionVigente
 
       const diasVencido = d.estado === 'vencida'
         ? Math.floor((ahora.getTime() - new Date(d.fecha_vencimiento).getTime()) / 86400000)
@@ -417,6 +432,8 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       if (existing) {
         existing.saldo_pendiente += saldo
         existing.saldo_pendiente_usd += saldoUSD
+        existing.mora_acumulada += mora
+        existing.mora_acumulada_usd += moraUSD
         if (diasVencido > existing.max_dias_vencido) existing.max_dias_vencido = diasVencido
         if (d.estado !== 'vencida' && d.estado !== 'pagada') {
           if (!existing.proximo_vencimiento || d.fecha_vencimiento < existing.proximo_vencimiento) {
@@ -429,6 +446,8 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
           cliente_id: clienteId,
           saldo_pendiente: saldo,
           saldo_pendiente_usd: saldoUSD,
+          mora_acumulada: mora,
+          mora_acumulada_usd: moraUSD,
           moneda: d.moneda,
           cotizacion: cotiz,
           clientes: { nombre: cliente?.nombre ?? 'Cliente' },
@@ -439,7 +458,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
     }
 
     const topClientes = Array.from(porCliente.values())
-      .sort((a, b) => b.saldo_pendiente_usd - a.saldo_pendiente_usd)
+      .sort((a, b) => (b.saldo_pendiente_usd + b.mora_acumulada_usd) - (a.saldo_pendiente_usd + a.mora_acumulada_usd))
       .slice(0, 5)
 
     // ── Respuesta final ─────────────────────────────────────
@@ -475,7 +494,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
         variacionMensual,
       },
       alertas: proximasRaw ?? [],
-      deudasVencidas: vencidasRaw ?? [],
+      deudasVencidas: vencidasConMora,
       ultimosPagos: ultimosPagosConMoneda,
       clienteMayorRiesgo,
       topClientes,

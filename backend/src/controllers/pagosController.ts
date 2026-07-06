@@ -13,7 +13,7 @@ export const getPagos = async (req: AuthRequest, res: Response) => {
 
     const { deuda_id, cliente_id, incluir_anulados, page = '1', limit = '20', desde, hasta } = req.query
     const pageNum = Math.max(1, parseInt(page as string) || 1)
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20))
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit as string) || 20))
     const offset = (pageNum - 1) * limitNum
 
     let query = supabase
