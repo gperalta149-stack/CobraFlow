@@ -5,11 +5,9 @@ export const clientesApi = {
   getAll: (buscar?: string, page?: number, limit?: number) => {
     const params = new URLSearchParams()
     if (buscar) params.append('buscar', buscar)
-    if (page && limit) {
-      params.append('page', page.toString())
-      params.append('limit', limit.toString())
-    }
-    const url = `/clientes${params.toString() ? `?${params.toString()}` : ''}`
+    params.append('page', (page ?? 1).toString())
+    params.append('limit', (limit ?? 500).toString())
+    const url = `/clientes?${params.toString()}`
     return api.get<Cliente[]>(url)
   },
 
@@ -17,11 +15,9 @@ export const clientesApi = {
   getArchivados: (buscar?: string, page?: number, limit?: number) => {
     const params = new URLSearchParams()
     if (buscar) params.append('buscar', buscar)
-    if (page && limit) {
-      params.append('page', page.toString())
-      params.append('limit', limit.toString())
-    }
-    const url = `/clientes/archivados${params.toString() ? `?${params.toString()}` : ''}`
+    params.append('page', (page ?? 1).toString())
+    params.append('limit', (limit ?? 500).toString())
+    const url = `/clientes/archivados?${params.toString()}`
     return api.get<Cliente[]>(url)
   },
 

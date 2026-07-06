@@ -17,8 +17,8 @@ interface DeudaPayload {
 export const deudasApi = {
   // Vista principal: trae TODAS las deudas (incluyendo pagadas)
   // El frontend filtra por estado con filtroEstados
-  getAll: (estado?: string) =>
-    api.get<Deuda[]>(`/deudas?incluir_pagadas=true${estado ? `&estado=${estado}` : ''}`),
+  getAll: (estado?: string, limit = 500) =>
+    api.get<Deuda[]>(`/deudas?incluir_pagadas=true&limit=${limit}${estado ? `&estado=${estado}` : ''}`),
 
   // Historial: solo deudas pagadas (para la vista de historial)
   getHistorial: (cliente_id?: string) =>
