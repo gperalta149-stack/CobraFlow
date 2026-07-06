@@ -179,7 +179,6 @@ export default function Clientes() {
       </div>
 
       {clientesPaginados.length === 0 && !isLoading ? (
-  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
     <EmptyState
       variant="minimal"
       title={activeTab === 'activos' ? "No hay clientes" : "No hay clientes archivados"}
@@ -191,7 +190,6 @@ export default function Clientes() {
         </Button>
       ) : undefined}
     />
-  </div>
 ) : (
   <>
     <ClientesTable

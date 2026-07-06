@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
+import type { PagoInsert } from '../types/pago.types'
 
 // ============================================
 // OBTENER PAGOS (con paginación, excluye anulados por defecto)
@@ -10,14 +11,23 @@ export const getPagos = async (req: AuthRequest, res: Response) => {
     const usuario_id = req.usuario?.id
     if (!usuario_id) return res.status(401).json({ error: 'Usuario no autenticado' })
 
-    const { deuda_id, cliente_id, incluir_anulados, page = '1', limit = '20' } = req.query
+    const { deuda_id, cliente_id, incluir_anulados, page = '1', limit = '20', desde, hasta } = req.query
     const pageNum = Math.max(1, parseInt(page as string) || 1)
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20))
     const offset = (pageNum - 1) * limitNum
 
     let query = supabase
       .from('pagos')
-      .select(`*, deudas(descripcion, monto_total), clientes(nombre)`, { count: 'exact' })
+      .select(`
+        *, 
+        deudas!inner(
+          descripcion, 
+          monto_total, 
+          moneda, 
+          cotizacion
+        ), 
+        clientes!inner(nombre)
+      `, { count: 'exact' })
       .eq('usuario_id', usuario_id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1)
@@ -27,6 +37,8 @@ export const getPagos = async (req: AuthRequest, res: Response) => {
     }
     if (deuda_id) query = query.eq('deuda_id', deuda_id)
     if (cliente_id) query = query.eq('cliente_id', cliente_id)
+    if (desde) query = query.gte('created_at', desde as string)
+    if (hasta) query = query.lte('created_at', hasta as string)
 
     const { data, error, count } = await query
     if (error) return res.status(500).json({ error: error.message })
@@ -75,9 +87,11 @@ export const getPagosByCliente = async (req: AuthRequest, res: Response) => {
         fecha_pago,
         observaciones,
         anulado,
-        deudas (
+        deudas!inner(
           descripcion,
-          monto_total
+          monto_total,
+          moneda,
+          cotizacion
         )
       `)
       .eq('cliente_id', cliente_id)
@@ -140,25 +154,25 @@ export const createPago = async (req: AuthRequest, res: Response) => {
       })
     }
 
+    const insertData: PagoInsert = {
+      deuda_id,
+      cliente_id: deuda.cliente_id,
+      usuario_id,
+      monto: montoEnARS,
+      monto_original: montoIngresado,
+      moneda: moneda_pago,
+      cotizacion,
+      metodo_pago: metodo_pago || 'efectivo',
+      observaciones
+    }
+
     const { data: pago, error: pagoError } = await supabase
       .from('pagos')
-      .insert([{
-        deuda_id,
-        cliente_id: deuda.cliente_id,
-        usuario_id,
-        monto: montoEnARS,
-        monto_original: montoIngresado,
-        moneda: moneda_pago,
-        cotizacion,
-        metodo_pago: metodo_pago || 'efectivo',
-        observaciones
-      }])
+      .insert([insertData])
       .select()
 
     if (pagoError) return res.status(400).json({ error: pagoError.message })
 
-    // El trigger trg_actualizar_saldo ya recalculó monto_pagado / saldo_pendiente / estado.
-    // Releemos la deuda en vez de calcularla a mano en el controller.
     const { data: deudaActualizada, error: refetchError } = await supabase
       .from('deudas')
       .select('saldo_pendiente, monto_pagado, estado')
@@ -222,7 +236,6 @@ export const anularPago = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: error.message })
     }
 
-    // trg_actualizar_saldo ya recalculó la deuda al excluir este pago de la suma
     const { data: deudaActualizada } = await supabase
       .from('deudas')
       .select('id, monto_pagado, saldo_pendiente, estado')

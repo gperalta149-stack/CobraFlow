@@ -4,50 +4,44 @@ import jwt from 'jsonwebtoken'
 import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
 
-  export const register = async (req: Request, res: Response) => {
-  console.log('🔍 register llamado')
-  console.log('📦 Body recibido:', req.body)
-  
-  const { nombre, apellido, email, password } = req.body
+export const register = async (req: Request, res: Response) => {
+  try {
+    const { nombre, apellido, email, password } = req.body
 
-  console.log('📝 Campos:', { nombre, apellido, email, password: '***' })
+    if (!nombre || !apellido || !email || !password) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios' })
+    }
 
-  if (!nombre || !apellido || !email || !password) {
-    console.log('❌ Faltan campos:', { 
-      nombre: !nombre, 
-      apellido: !apellido, 
-      email: !email, 
-      password: !password 
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    const { data, error } = await supabase
+      .from('usuarios')
+      .insert([{
+        nombre,
+        apellido,
+        email,
+        password: hashedPassword,
+        rol: 'usuario'
+      }])
+      .select()
+
+    if (error) {
+      console.error('❌ Supabase error:', error)
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.status(201).json({
+      mensaje: 'Usuario registrado correctamente',
+      usuario: data[0]
     })
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' })
+  } catch (error) {
+    console.error('Error inesperado en register:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10)
-
-  const { data, error } = await supabase
-    .from('usuarios')
-    .insert([{ 
-      nombre, 
-      apellido,
-      email, 
-      password: hashedPassword, 
-      rol: 'usuario' 
-    }])
-    .select()
-
-  if (error) {
-    console.error('❌ Supabase error:', error)
-    return res.status(400).json({ error: error.message })
-  }
-
-  console.log('✅ Usuario creado:', data[0])
-  res.status(201).json({
-    mensaje: 'Usuario registrado correctamente',
-    usuario: data[0]
-  })
 }
 
-  export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response) => {
+  try {
     const { email, password } = req.body
 
     if (!email || !password) {
@@ -85,16 +79,25 @@ import { AuthRequest } from '../middleware/authMiddleware'
       usuario: {
         id: data.id,
         nombre: data.nombre,
-        apellido: data.apellido,  // ← AGREGAR
+        apellido: data.apellido,
         email: data.email,
         rol: data.rol
       }
     })
+  } catch (error) {
+    console.error('Error inesperado en login:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
+}
 
-  export const actualizarPerfil = async (req: AuthRequest, res: Response) => {
+export const actualizarPerfil = async (req: AuthRequest, res: Response) => {
+  try {
     const { nombre, apellido, email } = req.body
-    const id = req.usuario.id
+    const id = req.usuario?.id
+
+    if (!id) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
 
     if (!nombre || !apellido || !email) {
       return res.status(400).json({ error: 'Nombre, apellido y email son obligatorios' })
@@ -104,7 +107,7 @@ import { AuthRequest } from '../middleware/authMiddleware'
       .from('usuarios')
       .update({
         nombre,
-        apellido,  // ← AGREGAR
+        apellido,
         email,
         updated_at: new Date()
       })
@@ -117,71 +120,122 @@ import { AuthRequest } from '../middleware/authMiddleware'
       mensaje: 'Perfil actualizado',
       usuario: data[0]
     })
+  } catch (error) {
+    console.error('Error inesperado en actualizarPerfil:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-
+}
 
 export const cambiarPassword = async (req: AuthRequest, res: Response) => {
-  const { passwordActual, passwordNuevo } = req.body
-  const id = req.usuario.id
+  try {
+    const { passwordActual, passwordNuevo } = req.body
+    const id = req.usuario?.id
 
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('id', id)
-    .single()
+    if (!id) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
 
-  if (error || !data) {
-    return res.status(404).json({ error: 'Usuario no encontrado' })
+    if (!passwordActual || !passwordNuevo) {
+      return res.status(400).json({ error: 'Contraseña actual y nueva son obligatorias' })
+    }
+
+    if (typeof passwordNuevo !== 'string' || passwordNuevo.length < 6) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' })
+    }
+
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    const passwordValido = await bcrypt.compare(passwordActual, data.password)
+
+    if (!passwordValido) {
+      return res.status(401).json({ error: 'Contraseña actual incorrecta' })
+    }
+
+    const hashedPassword = await bcrypt.hash(passwordNuevo, 10)
+
+    const { error: updateError } = await supabase
+      .from('usuarios')
+      .update({
+        password: hashedPassword,
+        updated_at: new Date()
+      })
+      .eq('id', id)
+
+    if (updateError) {
+      console.error('Error actualizando contraseña:', updateError)
+      return res.status(400).json({ error: updateError.message })
+    }
+
+    res.json({ mensaje: 'Contraseña cambiada correctamente' })
+  } catch (error) {
+    console.error('Error inesperado en cambiarPassword:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-
-  const passwordValido = await bcrypt.compare(passwordActual, data.password)
-
-  if (!passwordValido) {
-    return res.status(401).json({ error: 'Contraseña actual incorrecta' })
-  }
-
-  const hashedPassword = await bcrypt.hash(passwordNuevo, 10)
-
-  await supabase
-    .from('usuarios')
-    .update({
-      password: hashedPassword,
-      updated_at: new Date()
-    })
-    .eq('id', id)
-
-  res.json({ mensaje: 'Contraseña cambiada correctamente' })
 }
 
 export const obtenerMora = async (req: AuthRequest, res: Response) => {
-  const id = req.usuario.id
+  try {
+    const id = req.usuario?.id
+    if (!id) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
 
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('mora_activa, mora_porcentaje, mora_tipo')
-    .eq('id', id)
-    .single()
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('mora_activa, mora_porcentaje, mora_tipo')
+      .eq('id', id)
+      .single()
 
-  if (error || !data) return res.status(404).json({ error: 'Usuario no encontrado' })
+    if (error || !data) return res.status(404).json({ error: 'Usuario no encontrado' })
 
-  res.json(data)
+    res.json(data)
+  } catch (error) {
+    console.error('Error inesperado en obtenerMora:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
+  }
 }
 
 export const actualizarMora = async (req: AuthRequest, res: Response) => {
-  const { mora_activa, mora_porcentaje, mora_tipo } = req.body
-  const id = req.usuario.id
+  try {
+    const { mora_activa, mora_porcentaje, mora_tipo } = req.body
+    const id = req.usuario?.id
 
-  if (mora_porcentaje < 0 || mora_porcentaje > 100) {
-    return res.status(400).json({ error: 'El porcentaje debe estar entre 0 y 100' })
+    if (!id) {
+      return res.status(401).json({ error: 'Usuario no autenticado' })
+    }
+
+    if (typeof mora_activa !== 'boolean') {
+      return res.status(400).json({ error: 'mora_activa debe ser booleano' })
+    }
+
+    const porcentajeNum = Number(mora_porcentaje)
+    if (Number.isNaN(porcentajeNum) || porcentajeNum < 0 || porcentajeNum > 100) {
+      return res.status(400).json({ error: 'El porcentaje debe estar entre 0 y 100' })
+    }
+
+    if (mora_tipo !== 'unica' && mora_tipo !== 'mensual') {
+      return res.status(400).json({ error: "mora_tipo debe ser 'unica' o 'mensual'" })
+    }
+
+    const { data, error } = await supabase
+      .from('usuarios')
+      .update({ mora_activa, mora_porcentaje: porcentajeNum, mora_tipo, updated_at: new Date() })
+      .eq('id', id)
+      .select('mora_activa, mora_porcentaje, mora_tipo')
+
+    if (error) return res.status(400).json({ error: error.message })
+
+    res.json({ mensaje: 'Configuración de mora actualizada', config: data[0] })
+  } catch (error) {
+    console.error('Error inesperado en actualizarMora:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-
-  const { data, error } = await supabase
-    .from('usuarios')
-    .update({ mora_activa, mora_porcentaje, mora_tipo, updated_at: new Date() })
-    .eq('id', id)
-    .select('mora_activa, mora_porcentaje, mora_tipo')
-
-  if (error) return res.status(400).json({ error: error.message })
-
-  res.json({ mensaje: 'Configuración de mora actualizada', config: data[0] })
 }

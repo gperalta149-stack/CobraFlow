@@ -213,32 +213,30 @@ export default function Deudas() {
 
       {/* Tabla con datos paginados o EmptyState */}
       {filteredDeudas.length === 0 && !loading ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <EmptyState
-            variant="minimal"
-            title={hayFiltros ? "Sin resultados" : "No hay deudas"}
-            description={
-              hayFiltros 
-                ? "Ninguna deuda coincide con los filtros aplicados" 
-                : "Creá tu primera deuda para comenzar"
-            }
-            icon={<DollarSign size={40} />}
-            action={
-              hayFiltros ? (
-                <Button 
-                  variant="dark" 
-                  onClick={() => { limpiarFiltros(); setSearchTerm('') }}
-                >
-                  <IconX size={16} /> Limpiar filtros
-                </Button>
-              ) : (
-                <Button variant="dark-primary" onClick={openForm}>
-                  <IconPlus size={16} /> Crear primera deuda
-                </Button>
-              )
-            }
-          />
-        </div>
+        <EmptyState
+          variant="minimal"
+          title={hayFiltros ? "Sin resultados" : "No hay deudas"}
+          description={
+            hayFiltros 
+              ? "Ninguna deuda coincide con los filtros aplicados" 
+              : "Creá tu primera deuda para comenzar"
+          }
+          icon={<DollarSign size={40} />}
+          action={
+            hayFiltros ? (
+              <Button 
+                variant="dark" 
+                onClick={() => { limpiarFiltros(); setSearchTerm('') }}
+              >
+                <IconX size={16} /> Limpiar filtros
+              </Button>
+            ) : (
+              <Button variant="dark-primary" onClick={openForm}>
+                <IconPlus size={16} /> Crear primera deuda
+              </Button>
+            )
+          }
+        />
       ) : (
         <>
           <DeudasTable

@@ -1,4 +1,3 @@
-// frontend/src/features/analisis/hooks/useAnalisis.ts
 import { useState, useEffect } from 'react'
 import { dashboardApi } from '../../dashboard/services/dashboardApi'
 import { deudasApi } from '../../deudas/services/deudasApi'
@@ -178,14 +177,18 @@ export function useAnalisis(periodo: Periodo) {
 
         setDeudasPorEstadoData(distribucion)
 
-        // ── Balance del período ──────────────────────────────────
+        // ── Balance del período (✅ agrupado por moneda de DEUDA) ──
         const pagosPeriodo = pagosRes.data || []
         let cobradoARS = 0, cobradoUSD = 0
 
         pagosPeriodo.forEach((p: any) => {
           const fechaPago = new Date(p.fecha_pago || p.created_at)
           if (fechaPago >= fechaInicio) {
-            if (p.moneda === 'USD') {
+            // ✅ FIX: Usar moneda de la DEUDA (accediendo al primer elemento del array)
+            const deuda = Array.isArray(p.deudas) ? p.deudas[0] : p.deudas
+            const monedaDeuda = deuda?.moneda || 'ARS'
+            
+            if (monedaDeuda === 'USD') {
               cobradoUSD += Number(p.monto_original ?? 0)
             } else {
               cobradoARS += Number(p.monto ?? 0)
