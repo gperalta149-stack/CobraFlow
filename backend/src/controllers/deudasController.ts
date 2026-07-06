@@ -1,6 +1,7 @@
 import { Response } from 'express'
 import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
+import { calcularMora, aplicarNoDecremento } from '../utils/mora'
 
 interface DeudaInsert {
   cliente_id: string
@@ -58,25 +59,23 @@ export const actualizarMoraAcumulada = async (usuario_id: string) => {
   const hoyStr = hoy.toISOString().split('T')[0]
 
   for (const d of deudasVencidas) {
-    const vencimiento = new Date(d.fecha_vencimiento)
-    const diasVencida = Math.floor((hoy.getTime() - vencimiento.getTime()) / 86400000)
+    const { diasVencida, moraCalculada } = calcularMora(
+      Number(d.monto_total),
+      d.fecha_vencimiento,
+      moraConfig,
+      hoy
+    )
     if (diasVencida <= 0) continue
 
-    const mesesVencida = Math.floor(diasVencida / 30) || 1
-    const porcentaje = moraConfig.mora_porcentaje / 100
-
-    const moraCalculada = moraConfig.mora_tipo === 'unica'
-      ? Number(d.monto_total) * porcentaje
-      : Number(d.monto_total) * porcentaje * mesesVencida
-
     const moraActual = Number(d.monto_mora_acumulada ?? 0)
+    const moraFinal = aplicarNoDecremento(moraActual, moraCalculada)
 
     // Solo actualiza si la mora calculada creció (nunca disminuye)
-    if (moraCalculada > moraActual) {
+    if (moraFinal > moraActual) {
       await supabase
         .from('deudas')
         .update({
-          monto_mora_acumulada: Math.round(moraCalculada * 100) / 100,
+          monto_mora_acumulada: moraFinal,
           mora_calculada_hasta: hoyStr,
         })
         .eq('id', d.id)
@@ -101,7 +100,7 @@ export const getDeudas = async (req: AuthRequest, res: Response) => {
 
     const { estado, cliente_id, incluir_pagadas, page = '1', limit = '20' } = req.query
     const pageNum = Math.max(1, parseInt(page as string) || 1)
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20))
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit as string) || 20))
     const offset = (pageNum - 1) * limitNum
 
     let query = supabase
@@ -143,7 +142,7 @@ export const getHistorialDeudas = async (req: AuthRequest, res: Response) => {
 
     const { cliente_id, page = '1', limit = '20' } = req.query
     const pageNum = Math.max(1, parseInt(page as string) || 1)
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20))
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit as string) || 20))
     const offset = (pageNum - 1) * limitNum
 
     let query = supabase
