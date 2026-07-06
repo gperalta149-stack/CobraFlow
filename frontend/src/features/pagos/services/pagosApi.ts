@@ -4,8 +4,8 @@ import type { Pago, Deuda, PagoFormData } from '../types'
 
 export const pagosApi = {
   // Modificar getAll para aceptar parámetros opcionales
-  getAll: (params?: { desde?: string; hasta?: string }) =>
-    api.get<Pago[]>('/pagos', { params }),
+  getAll: (params?: { desde?: string; hasta?: string; limit?: number }) =>
+    api.get<Pago[]>('/pagos', { params: { limit: 500, ...params } }),
 
   getDeudasPendientes: () =>
     api.get<Deuda[]>('/deudas').then(({ data }) =>
