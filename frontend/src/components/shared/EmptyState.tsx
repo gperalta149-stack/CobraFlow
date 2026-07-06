@@ -51,8 +51,8 @@ export function EmptyState({
   }
 
   const variants = {
-    default: 'bg-white shadow-sm',
-    soft: 'bg-gray-50 border border-gray-100',
+    default: 'bg-[#242938] border border-[#2e3347] shadow-sm',
+    soft: 'bg-[#1a1d2e] border border-[#2e3347]',
     minimal: ''
   }
 
@@ -74,24 +74,24 @@ export function EmptyState({
         <div
           className={`
             mx-auto mb-4 flex items-center justify-center rounded-xl
-            bg-gradient-to-br from-gray-50 to-gray-100
+            bg-[#1a1d2e]
             ${s.iconBox}
           `}
         >
-          <div className={`${s.icon} text-gray-400`}>
+          <div className={`${s.icon} text-[#6b7280]`}>
             {icon}
           </div>
         </div>
       )}
 
       {/* TITLE */}
-      <h3 className={`font-semibold text-gray-800 mb-2 ${s.title}`}>
+      <h3 className={`font-semibold text-[#f0f2f5] mb-2 ${s.title}`}>
         {title}
       </h3>
 
       {/* DESCRIPTION */}
       {description && (
-        <p className={`text-gray-500 mx-auto ${s.desc}`}>
+        <p className={`text-[#94a3b8] mx-auto ${s.desc}`}>
           {description}
         </p>
       )}

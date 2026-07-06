@@ -1,7 +1,8 @@
-// dashboardController.ts - Versión corregida con try-catch
+// dashboardController.ts - Versión corregida con agrupación por moneda de deuda
 import { Response } from 'express'
 import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
+import { actualizarMoraAcumulada } from './deudasController'
 
 const actualizarVencidas = async () => {
   await supabase.rpc('actualizar_deudas_vencidas')
@@ -15,37 +16,6 @@ const getCotizacionVigente = async (): Promise<number> => {
     .limit(1)
     .single()
   return data ? Number(data.venta) : 1
-}
-
-interface MoraConfig {
-  mora_activa: boolean
-  mora_porcentaje: number
-  mora_tipo: 'unica' | 'mensual'
-}
-
-const calcularMoraBackend = (
-  saldoPendiente: number,
-  fechaVencimiento: string,
-  estado: string,
-  config: MoraConfig | null
-): { tieneMora: boolean; montoMora: number } => {
-  if (!config?.mora_activa) return { tieneMora: false, montoMora: 0 }
-  if (estado !== 'vencida') return { tieneMora: false, montoMora: 0 }
-
-  const hoy = new Date()
-  const vencimiento = new Date(fechaVencimiento)
-  const diasVencida = Math.floor((hoy.getTime() - vencimiento.getTime()) / 86400000)
-
-  if (diasVencida <= 0) return { tieneMora: false, montoMora: 0 }
-
-  const mesesVencida = Math.floor(diasVencida / 30) || 1
-  const porcentaje = config.mora_porcentaje / 100
-
-  const montoMora = config.mora_tipo === 'unica'
-    ? saldoPendiente * porcentaje
-    : saldoPendiente * porcentaje * mesesVencida
-
-  return { tieneMora: true, montoMora: Math.round(montoMora * 100) / 100 }
 }
 
 // ============================================
@@ -63,7 +33,13 @@ export const getEvolucionPagos = async (req: AuthRequest, res: Response) => {
 
     const { data, error } = await supabase
       .from('pagos')
-      .select('monto, monto_original, moneda, created_at')
+      .select(`
+        monto, 
+        monto_original, 
+        moneda, 
+        created_at,
+        deudas!inner(moneda, cotizacion)
+      `)
       .eq('usuario_id', usuario_id)
       .gte('created_at', seisMesesAtras.toISOString())
       .order('created_at', { ascending: true })
@@ -80,7 +56,11 @@ export const getEvolucionPagos = async (req: AuthRequest, res: Response) => {
         pagosPorMes[nombreMes] = { ars: 0, usd: 0 }
       }
       
-      if (pago.moneda === 'USD') {
+      // ✅ FIX: Usar moneda de la DEUDA (accediendo al primer elemento del array)
+      const deuda = Array.isArray(pago.deudas) ? pago.deudas[0] : pago.deudas
+      const monedaDeuda = deuda?.moneda || 'ARS'
+      
+      if (monedaDeuda === 'USD') {
         pagosPorMes[nombreMes].usd += Number(pago.monto_original ?? 0)
       } else {
         pagosPorMes[nombreMes].ars += Number(pago.monto)
@@ -109,6 +89,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
     if (!usuario_id) return res.status(401).json({ error: 'Usuario no autenticado' })
 
     await actualizarVencidas()
+    await actualizarMoraAcumulada(usuario_id)
 
     const ahora = new Date()
     const inicioHoy = new Date(); inicioHoy.setHours(0, 0, 0, 0)
@@ -153,7 +134,13 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 
       supabase
         .from('pagos')
-        .select('monto, moneda, monto_original, cotizacion')
+        .select(`
+          monto, 
+          moneda, 
+          monto_original, 
+          cotizacion,
+          deudas!inner(moneda, cotizacion)
+        `)
         .eq('usuario_id', usuario_id)
         .gte('created_at', inicioMes.toISOString()),
 
@@ -166,14 +153,26 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 
       supabase
         .from('pagos')
-        .select('monto, moneda, monto_original, cotizacion')
+        .select(`
+          monto, 
+          moneda, 
+          monto_original, 
+          cotizacion,
+          deudas!inner(moneda, cotizacion)
+        `)
         .eq('usuario_id', usuario_id)
         .gte('created_at', inicioMesPasado.toISOString())
         .lte('created_at', finMesPasado.toISOString()),
 
       supabase
         .from('pagos')
-        .select('monto, moneda, monto_original, cotizacion')
+        .select(`
+          monto, 
+          moneda, 
+          monto_original, 
+          cotizacion,
+          deudas!inner(moneda, cotizacion)
+        `)
         .eq('usuario_id', usuario_id)
         .gte('created_at', inicioHoy.toISOString())
         .lte('created_at', finHoy.toISOString()),
@@ -198,14 +197,24 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 
       supabase
         .from('pagos')
-        .select('id, monto, monto_original, moneda, cotizacion, metodo_pago, created_at, clientes(nombre), deudas(descripcion)')
+        .select(`
+          id, 
+          monto, 
+          monto_original, 
+          moneda, 
+          cotizacion, 
+          metodo_pago, 
+          created_at, 
+          clientes(nombre), 
+          deudas(descripcion, moneda, cotizacion)
+        `)
         .eq('usuario_id', usuario_id)
         .order('created_at', { ascending: false })
         .limit(5),
 
       supabase
         .from('deudas')
-        .select('id, descripcion, saldo_pendiente, moneda, cotizacion, fecha_vencimiento, clientes(id, nombre)')
+        .select('id, descripcion, saldo_pendiente, monto_mora_acumulada, moneda, cotizacion, fecha_vencimiento, clientes(id, nombre)')
         .eq('usuario_id', usuario_id)
         .eq('activo', true)
         .eq('estado', 'vencida')
@@ -267,31 +276,39 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       ? (montoCobradoTotalARS / montoGeneradoTotalARS) * 100
       : 0
 
-    // ── Pagos del mes / hoy ──────────────────────────────────
+    // ── Pagos del mes (✅ agrupado por moneda de DEUDA) ──────
     let totalRecaudadoMesARS = 0
     let totalRecaudadoMesUSD = 0
     for (const p of pagosMes ?? []) {
-      if (p.moneda === 'ARS') {
+      const deuda = Array.isArray(p.deudas) ? p.deudas[0] : p.deudas
+      const monedaDeuda = deuda?.moneda || 'ARS'
+      if (monedaDeuda === 'ARS') {
         totalRecaudadoMesARS += Number(p.monto)
       } else {
         totalRecaudadoMesUSD += Number(p.monto_original ?? 0)
       }
     }
 
+    // ── Pagos del mes pasado (✅ agrupado por moneda de DEUDA) ──
     let totalRecaudadoMesPasadoARS = 0
     let totalRecaudadoMesPasadoUSD = 0
     for (const p of pagosMesPasado ?? []) {
-      if (p.moneda === 'ARS') {
+      const deuda = Array.isArray(p.deudas) ? p.deudas[0] : p.deudas
+      const monedaDeuda = deuda?.moneda || 'ARS'
+      if (monedaDeuda === 'ARS') {
         totalRecaudadoMesPasadoARS += Number(p.monto)
       } else {
         totalRecaudadoMesPasadoUSD += Number(p.monto_original ?? 0)
       }
     }
 
+    // ── Pagos de hoy (✅ agrupado por moneda de DEUDA) ──────
     let totalRecaudadoHoyARS = 0
     let totalRecaudadoHoyUSD = 0
     for (const p of pagosHoy ?? []) {
-      if (p.moneda === 'ARS') {
+      const deuda = Array.isArray(p.deudas) ? p.deudas[0] : p.deudas
+      const monedaDeuda = deuda?.moneda || 'ARS'
+      if (monedaDeuda === 'ARS') {
         totalRecaudadoHoyARS += Number(p.monto)
       } else {
         totalRecaudadoHoyUSD += Number(p.monto_original ?? 0)
@@ -310,20 +327,27 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
     const proximoVencimiento = proximasRaw?.[0]?.fecha_vencimiento ?? null
 
     // ── Últimos pagos ────────────────────────────────────────
-    const ultimosPagosConMoneda = ultimosPagos?.map(p => ({
-      id: p.id,
-      monto: p.monto,
-      moneda: p.moneda,
-      monto_original: p.monto_original ?? (
-        p.moneda === 'USD' && p.cotizacion
-          ? Math.round(Number(p.monto) / Number(p.cotizacion))
-          : Number(p.monto)
-      ),
-      metodo_pago: p.metodo_pago,
-      created_at: p.created_at,
-      clientes: p.clientes,
-      deudas: p.deudas,
-    })) ?? []
+    const ultimosPagosConMoneda = ultimosPagos?.map(p => {
+      const deuda = Array.isArray(p.deudas) ? p.deudas[0] : p.deudas
+      return {
+        id: p.id,
+        monto: p.monto,
+        moneda: p.moneda,
+        monto_original: p.monto_original ?? (
+          p.moneda === 'USD' && p.cotizacion
+            ? Math.round(Number(p.monto) / Number(p.cotizacion))
+            : Number(p.monto)
+        ),
+        metodo_pago: p.metodo_pago,
+        created_at: p.created_at,
+        clientes: p.clientes,
+        deudas: {
+          descripcion: deuda?.descripcion || '',
+          moneda: deuda?.moneda || 'ARS',
+          cotizacion: deuda?.cotizacion || 1
+        },
+      }
+    }) ?? []
 
     // ── Mayor riesgo por score (días × monto_usd) con mora ─────
     let clienteMayorRiesgo = null
@@ -341,16 +365,14 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       conScore.sort((a, b) => b.score - a.score)
       const top = conScore[0]
 
-      const { tieneMora, montoMora } = calcularMoraBackend(
-        top.saldo,
-        top.d.fecha_vencimiento,
-        'vencida',
-        moraConfigData ?? null
-      )
+      // Usa la mora ya persistida (calculada sobre monto_total, no sobre saldo_pendiente)
+      // en lugar de recalcularla localmente, para evitar inconsistencias con la vista de Deudas.
+      const montoMoraARS = Number(top.d.monto_mora_acumulada ?? 0)
+      const tieneMora = !!moraConfigData?.mora_activa && montoMoraARS > 0
 
       const pendiente = top.d.moneda === 'ARS' ? top.saldo : top.montoUSD
-      const mora = top.d.moneda === 'ARS' ? montoMora : montoMora / top.cotiz
-      const total = pendiente + mora
+      const mora = top.d.moneda === 'ARS' ? montoMoraARS : montoMoraARS / top.cotiz
+      const total = pendiente + (tieneMora ? mora : 0)
 
       clienteMayorRiesgo = {
         cliente_id: top.cliente?.id ?? null,

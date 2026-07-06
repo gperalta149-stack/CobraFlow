@@ -36,7 +36,7 @@ const actualizarVencidas = async () => {
 // ============================================
 // ACTUALIZAR MORA ACUMULADA
 // ============================================
-const actualizarMoraAcumulada = async (usuario_id: string) => {
+export const actualizarMoraAcumulada = async (usuario_id: string) => {
   const { data: deudasVencidas } = await supabase
     .from('deudas')
     .select('id, monto_total, fecha_vencimiento, monto_mora_acumulada')

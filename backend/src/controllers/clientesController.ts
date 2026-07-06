@@ -1,14 +1,8 @@
-import { Request, Response } from 'express'
-import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
-
-// ============================================
-// SANITIZADOR PARA BÚSQUEDA
-// Escapa caracteres que rompen la sintaxis del filtro .or() de PostgREST
-// ============================================
-const sanitizarBusqueda = (texto: string): string => {
-  return texto.replace(/[,()]/g, '')
-}
+import { Response } from 'express'
+import { supabase } from '../config/supabase'
+import { buscarClientePropio, dniYaExiste, construirFiltroBusqueda } from '../utils/clienteHelpers'
+import type { ClienteInsert, ClienteUpdate } from '../types/cliente.types'
 
 // ============================================
 // OBTENER TODOS LOS CLIENTES (solo activos)
@@ -34,12 +28,7 @@ export const getClientes = async (req: AuthRequest, res: Response) => {
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1)
 
-    if (buscar) {
-      const buscarSeguro = sanitizarBusqueda(buscar as string)
-      query = query.or(
-        `nombre.ilike.%${buscarSeguro}%,apellido.ilike.%${buscarSeguro}%,dni.ilike.%${buscarSeguro}%,email.ilike.%${buscarSeguro}%`
-      )
-    }
+    if (buscar) query = query.or(construirFiltroBusqueda(buscar as string))
 
     const { data, error, count } = await query
 
@@ -80,12 +69,7 @@ export const getClientesArchivados = async (req: AuthRequest, res: Response) => 
       .order('updated_at', { ascending: false })
       .range(offset, offset + limitNum - 1)
 
-    if (buscar) {
-      const buscarSeguro = sanitizarBusqueda(buscar as string)
-      query = query.or(
-        `nombre.ilike.%${buscarSeguro}%,apellido.ilike.%${buscarSeguro}%,dni.ilike.%${buscarSeguro}%,email.ilike.%${buscarSeguro}%`
-      )
-    }
+    if (buscar) query = query.or(construirFiltroBusqueda(buscar as string))
 
     const { data, error, count } = await query
 
@@ -137,9 +121,9 @@ export const getClienteById = async (req: AuthRequest, res: Response) => {
 // ============================================
 export const createCliente = async (req: AuthRequest, res: Response) => {
   try {
-    const { 
-      nombre, apellido, dni, email, telefono, 
-      direccion, ciudad, provincia, empresa, observaciones 
+    const {
+      nombre, apellido, dni, email, telefono,
+      direccion, ciudad, provincia, empresa, observaciones
     } = req.body
     const usuario_id = req.usuario?.id
 
@@ -161,33 +145,27 @@ export const createCliente = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'El teléfono es obligatorio' })
     }
 
-    // Verificar DNI único para este usuario
-    const { data: dniExistente } = await supabase
-      .from('clientes')
-      .select('id')
-      .eq('dni', dni.trim())
-      .eq('usuario_id', usuario_id)
-      .maybeSingle()
-
-    if (dniExistente) {
+    if (await dniYaExiste(usuario_id, dni)) {
       return res.status(400).json({ error: 'Ya existe un cliente con ese DNI' })
+    }
+
+    const insertData: ClienteInsert = {
+      usuario_id,
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      dni: dni.trim(),
+      email: email?.trim() || null,
+      telefono: telefono.trim(),
+      direccion: direccion?.trim() || null,
+      ciudad: ciudad?.trim() || null,
+      provincia: provincia?.trim() || null,
+      empresa: empresa?.trim() || null,
+      observaciones: observaciones?.trim() || null,
     }
 
     const { data, error } = await supabase
       .from('clientes')
-      .insert([{ 
-        nombre: nombre.trim(),
-        apellido: apellido.trim(),
-        dni: dni.trim(),
-        email: email?.trim() || null,
-        telefono: telefono.trim(),
-        direccion: direccion?.trim() || null,
-        ciudad: ciudad?.trim() || null,
-        provincia: provincia?.trim() || null,
-        empresa: empresa?.trim() || null,
-        observaciones: observaciones?.trim() || null,
-        usuario_id
-      }])
+      .insert([insertData])
       .select()
 
     if (error) {
@@ -208,9 +186,9 @@ export const createCliente = async (req: AuthRequest, res: Response) => {
 export const updateCliente = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
-    const { 
-      nombre, apellido, dni, email, telefono, 
-      direccion, ciudad, provincia, empresa, observaciones 
+    const {
+      nombre, apellido, dni, email, telefono,
+      direccion, ciudad, provincia, empresa, observaciones
     } = req.body
     const usuario_id = req.usuario?.id
 
@@ -218,48 +196,32 @@ export const updateCliente = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' })
     }
 
-    // Verificar que el cliente existe y pertenece al usuario
-    const { data: clienteExistente, error: checkError } = await supabase
-      .from('clientes')
-      .select('id, dni')
-      .eq('id', id)
-      .eq('usuario_id', usuario_id)
-      .single()
-
-    if (checkError || !clienteExistente) {
+    const clienteExistente = await buscarClientePropio(id, usuario_id, 'id, nombre, apellido, dni')
+    if (!clienteExistente) {
       return res.status(404).json({ error: 'Cliente no encontrado' })
     }
 
-    // Verificar DNI único (si cambió)
-    if (dni && dni !== clienteExistente.dni) {
-      const { data: dniExistente } = await supabase
-        .from('clientes')
-        .select('id')
-        .eq('dni', dni.trim())
-        .eq('usuario_id', usuario_id)
-        .neq('id', id)
-        .maybeSingle()
+    if (dni && dni !== clienteExistente.dni && (await dniYaExiste(usuario_id, dni, id))) {
+      return res.status(400).json({ error: 'Ya existe otro cliente con ese DNI' })
+    }
 
-      if (dniExistente) {
-        return res.status(400).json({ error: 'Ya existe otro cliente con ese DNI' })
-      }
+    const updateData: ClienteUpdate = {
+      updated_at: new Date(),
+      nombre: nombre?.trim(),
+      apellido: apellido?.trim(),
+      dni: dni?.trim(),
+      email: email?.trim() || null,
+      telefono: telefono?.trim() || null,
+      direccion: direccion?.trim() || null,
+      ciudad: ciudad?.trim() || null,
+      provincia: provincia?.trim() || null,
+      empresa: empresa?.trim() || null,
+      observaciones: observaciones?.trim() || null,
     }
 
     const { data, error } = await supabase
       .from('clientes')
-      .update({ 
-        nombre: nombre?.trim(),
-        apellido: apellido?.trim(),
-        dni: dni?.trim(),
-        email: email?.trim() || null,
-        telefono: telefono?.trim() || null,
-        direccion: direccion?.trim() || null,
-        ciudad: ciudad?.trim() || null,
-        provincia: provincia?.trim() || null,
-        empresa: empresa?.trim() || null,
-        observaciones: observaciones?.trim() || null,
-        updated_at: new Date()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
 
@@ -287,24 +249,15 @@ export const archivarCliente = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' })
     }
 
-    // Verificar que el cliente existe y pertenece al usuario
-    const { data: clienteExistente, error: checkError } = await supabase
-      .from('clientes')
-      .select('id, nombre, apellido, activo')
-      .eq('id', id)
-      .eq('usuario_id', usuario_id)
-      .single()
-
-    if (checkError || !clienteExistente) {
+    const clienteExistente = await buscarClientePropio(id, usuario_id)
+    if (!clienteExistente) {
       return res.status(404).json({ error: 'Cliente no encontrado' })
     }
 
-    // Verificar si ya está archivado
     if (!clienteExistente.activo) {
       return res.status(400).json({ error: 'El cliente ya está archivado' })
     }
 
-    // Archivar cliente
     const { error } = await supabase
       .from('clientes')
       .update({ activo: false, updated_at: new Date() })
@@ -315,7 +268,7 @@ export const archivarCliente = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json({ 
+    res.json({
       mensaje: `Cliente "${clienteExistente.nombre} ${clienteExistente.apellido}" archivado correctamente`,
       cliente: clienteExistente
     })
@@ -337,24 +290,15 @@ export const restaurarCliente = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' })
     }
 
-    // Verificar que el cliente existe y pertenece al usuario
-    const { data: clienteExistente, error: checkError } = await supabase
-      .from('clientes')
-      .select('id, nombre, apellido, activo')
-      .eq('id', id)
-      .eq('usuario_id', usuario_id)
-      .single()
-
-    if (checkError || !clienteExistente) {
+    const clienteExistente = await buscarClientePropio(id, usuario_id)
+    if (!clienteExistente) {
       return res.status(404).json({ error: 'Cliente no encontrado' })
     }
 
-    // Verificar si ya está activo
     if (clienteExistente.activo) {
       return res.status(400).json({ error: 'El cliente ya está activo' })
     }
 
-    // Restaurar cliente
     const { error } = await supabase
       .from('clientes')
       .update({ activo: true, updated_at: new Date() })
@@ -365,7 +309,7 @@ export const restaurarCliente = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: error.message })
     }
 
-    res.json({ 
+    res.json({
       mensaje: `Cliente "${clienteExistente.nombre} ${clienteExistente.apellido}" restaurado correctamente`,
       cliente: clienteExistente
     })
@@ -394,12 +338,7 @@ export const exportClientesToExcel = async (req: AuthRequest, res: Response) => 
       .eq('activo', true)
       .order('apellido', { ascending: true })
 
-    if (buscar) {
-      const buscarSeguro = sanitizarBusqueda(buscar as string)
-      query = query.or(
-        `nombre.ilike.%${buscarSeguro}%,apellido.ilike.%${buscarSeguro}%,dni.ilike.%${buscarSeguro}%,email.ilike.%${buscarSeguro}%`
-      )
-    }
+    if (buscar) query = query.or(construirFiltroBusqueda(buscar as string))
 
     const { data: clientes, error } = await query
 
@@ -428,7 +367,7 @@ export const exportClientesToExcel = async (req: AuthRequest, res: Response) => 
     ])
 
     let csvContent = headers.join(';') + '\n'
-    
+
     rows.forEach(row => {
       const processedRow = row.map(cell => {
         if (cell.includes(';') || cell.includes('"')) {
@@ -440,7 +379,7 @@ export const exportClientesToExcel = async (req: AuthRequest, res: Response) => 
     })
 
     const bom = '\uFEFF'
-    
+
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
     res.setHeader('Content-Disposition', `attachment; filename=clientes_${new Date().toISOString().split('T')[0]}.csv`)
     res.send(bom + csvContent)
@@ -463,15 +402,8 @@ export const getResumenFinanciero = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Usuario no autenticado' })
     }
 
-    // Verificar que el cliente existe y pertenece al usuario
-    const { data: cliente, error: clienteError } = await supabase
-      .from('clientes')
-      .select('nombre, apellido, dni')
-      .eq('id', id)
-      .eq('usuario_id', usuario_id)
-      .single()
-
-    if (clienteError || !cliente) {
+    const cliente = await buscarClientePropio(id, usuario_id, 'nombre, apellido, dni')
+    if (!cliente) {
       return res.status(404).json({ error: 'Cliente no encontrado' })
     }
 
@@ -491,7 +423,7 @@ export const getResumenFinanciero = async (req: AuthRequest, res: Response) => {
     const totalMonto = deudas.reduce((sum, d) => sum + Number(d.monto_total), 0)
     const totalPagado = deudas.reduce((sum, d) => sum + Number(d.monto_pagado), 0)
     const totalPendiente = deudas.reduce((sum, d) => sum + Number(d.saldo_pendiente), 0)
-    
+
     const deudasPorEstado = {
       pendiente: deudas.filter(d => d.estado === 'pendiente').length,
       parcial: deudas.filter(d => d.estado === 'parcial').length,
@@ -499,7 +431,7 @@ export const getResumenFinanciero = async (req: AuthRequest, res: Response) => {
       vencida: deudas.filter(d => d.estado === 'vencida').length,
     }
 
-    const tasaRecuperacion = totalMonto > 0 
+    const tasaRecuperacion = totalMonto > 0
       ? ((totalPagado / totalMonto) * 100).toFixed(1)
       : '0.0'
 
@@ -545,14 +477,14 @@ export const importClientesFromCSV = async (req: AuthRequest, res: Response) => 
 
     const csvContent = req.file.buffer.toString('utf-8')
     const lines = csvContent.split('\n').filter(line => line.trim())
-    
+
     if (lines.length < 2) {
       return res.status(400).json({ error: 'El archivo no contiene datos' })
     }
 
     // Leer cabeceras (primera línea) - espera separador punto y coma
     const headers = lines[0].split(';').map(h => h.replace(/["']/g, '').trim().toLowerCase())
-    
+
     // Mapear índices de columnas
     const nombreIndex = headers.findIndex(h => h === 'nombre')
     const apellidoIndex = headers.findIndex(h => h === 'apellido')
@@ -573,8 +505,8 @@ export const importClientesFromCSV = async (req: AuthRequest, res: Response) => 
     if (telefonoIndex === -1) missingColumns.push('Teléfono')
 
     if (missingColumns.length > 0) {
-      return res.status(400).json({ 
-        error: `El archivo debe tener las siguientes columnas: ${missingColumns.join(', ')}` 
+      return res.status(400).json({
+        error: `El archivo debe tener las siguientes columnas: ${missingColumns.join(', ')}`
       })
     }
 
@@ -584,12 +516,12 @@ export const importClientesFromCSV = async (req: AuthRequest, res: Response) => 
     for (let i = 1; i < lines.length; i++) {
       try {
         const values = lines[i].split(';').map(v => v.replace(/["']/g, '').trim())
-        
+
         const nombre = values[nombreIndex]
         const apellido = values[apellidoIndex]
         const dni = values[dniIndex]
         const telefono = values[telefonoIndex]
-        
+
         // Validar campos obligatorios
         if (!nombre) {
           errores.push(`Fila ${i + 1}: Nombre requerido`)
@@ -608,15 +540,7 @@ export const importClientesFromCSV = async (req: AuthRequest, res: Response) => 
           continue
         }
 
-        // Verificar DNI único para este usuario
-        const { data: dniExistente } = await supabase
-          .from('clientes')
-          .select('id')
-          .eq('dni', dni)
-          .eq('usuario_id', usuario_id)
-          .maybeSingle()
-
-        if (dniExistente) {
+        if (await dniYaExiste(usuario_id, dni)) {
           errores.push(`Fila ${i + 1}: Ya existe un cliente con DNI ${dni}`)
           continue
         }
@@ -628,7 +552,7 @@ export const importClientesFromCSV = async (req: AuthRequest, res: Response) => 
           continue
         }
 
-        const nuevoCliente = {
+        const nuevoCliente: ClienteInsert = {
           usuario_id,
           nombre,
           apellido,
