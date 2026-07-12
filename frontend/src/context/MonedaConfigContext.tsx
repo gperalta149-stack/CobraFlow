@@ -45,7 +45,7 @@ const MonedaConfigContext = createContext<MonedaConfigContextValue | null>(null)
 
 export function MonedaConfigProvider({ children }: { children: ReactNode }) {
   const { rate, loading: rateLoading } = useExchangeRate()
-  const cotizacion = rate?.venta || 1450
+  const cotizacion = rate?.venta || 0
 
   const [config, setConfig] = useState<MonedaConfig>(DEFAULT_CONFIG)
   const [loading, setLoading] = useState(true)
@@ -70,8 +70,9 @@ export function MonedaConfigProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const debeMostrarEquivalencia = (seccion: 'dashboard' | 'deudas' | 'pagos' | 'analisis'): boolean => {
-    // ← Si está cargando, NO mostrar equivalencias
+    // ← Si está cargando, o no hay cotización real disponible, NO mostrar equivalencias
     if (loading || rateLoading) return false
+    if (cotizacion <= 0) return false
     if (!config.mostrarEquivalencias) return false
     return config.secciones[seccion]
   }

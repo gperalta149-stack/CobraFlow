@@ -29,22 +29,24 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
   const { debeMostrarEquivalencia, cotizacion } = useMonedaConfig()
   const mostrarEquivalencia = debeMostrarEquivalencia('dashboard')
 
-  const fmtMonto = (saldo: number, moneda: string, cotizacionDeuda: number): string => {
+  const fmtMonto = (saldo: number, mora: number, moneda: string, cotizacionDeuda: number): string => {
+    const total = saldo + mora
     if (moneda === 'USD') {
       const cotiz = cotizacionDeuda > 0 ? cotizacionDeuda : cotizacion
-      const usd = saldo / cotiz
+      const usd = total / cotiz
       return `USD ${usd.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     }
-    return `$${Math.round(saldo).toLocaleString('es-AR')}`
+    return `$${Math.round(total).toLocaleString('es-AR')}`
   }
 
-  const fmtEquivalencia = (saldo: number, moneda: string, cotizacionDeuda: number): string => {
+  const fmtEquivalencia = (saldo: number, mora: number, moneda: string, cotizacionDeuda: number): string => {
+    const total = saldo + mora
     if (moneda === 'USD') {
       const cotiz = cotizacionDeuda > 0 ? cotizacionDeuda : cotizacion
-      const usd = saldo / cotiz
+      const usd = total / cotiz
       return `≈ $${Math.round(usd * cotizacion).toLocaleString('es-AR')} ARS`
     }
-    return `≈ USD ${(saldo / cotizacion).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return `≈ USD ${(total / cotizacion).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   const handleVer = (a: Alerta) => {
@@ -105,6 +107,7 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
               ? `${diasAbs}d`
               : dias === 0 ? 'Hoy' : dias === 1 ? 'Mañana' : `${dias}d`
             const saldo = Number(a.saldo_pendiente)
+            const mora = Number(a.monto_mora_acumulada ?? 0)
             const cotizDeuda = Number(a.cotizacion)
 
             return (
@@ -146,11 +149,16 @@ export function AlertasList({ alertas, deudasVencidas = [] }: AlertasListProps) 
                     fontSize: 14,
                     color: esVencida ? '#f87171' : '#f0f2f5',
                   }}>
-                    {fmtMonto(saldo, a.moneda, cotizDeuda)}
+                    {fmtMonto(saldo, mora, a.moneda, cotizDeuda)}
                   </H3>
                   {mostrarEquivalencia && (
                     <TextSmall style={{ marginTop: 2 }}>
-                      {fmtEquivalencia(saldo, a.moneda, cotizDeuda)}
+                      {fmtEquivalencia(saldo, mora, a.moneda, cotizDeuda)}
+                    </TextSmall>
+                  )}
+                  {mora > 0 && (
+                    <TextSmall style={{ marginTop: 2, color: '#f87171' }}>
+                      incl. mora ${Math.round(mora).toLocaleString('es-AR')}
                     </TextSmall>
                   )}
                   <TextSmall style={{ marginTop: 2 }}>

@@ -38,27 +38,31 @@ export interface KPIs {
 }
 
 export interface TopCliente {
-  cliente_id: string
-  saldo_pendiente: number
-  saldo_pendiente_usd: number
-  moneda: string
-  cotizacion: number
-  clientes: { nombre: string }
-  max_dias_vencido: number
-  proximo_vencimiento: string | null
-}
+    cliente_id: string
+    saldo_pendiente: number
+    saldo_pendiente_usd: number
+    mora_acumulada: number
+    mora_acumulada_usd: number
+    moneda: string
+    cotizacion: number
+    clientes: { nombre: string }
+    max_dias_vencido: number
+    proximo_vencimiento: string | null
+  }
 
 export interface Alerta {
-  id: string
-  deuda_id?: string
-  cliente_id?: string
-  descripcion: string
-  fecha_vencimiento: string
-  saldo_pendiente: number
-  moneda: string
-  cotizacion: number
-  clientes: { nombre: string }
-}
+    id: string
+    deuda_id?: string
+    cliente_id?: string
+    descripcion: string
+    fecha_vencimiento: string
+    saldo_pendiente: number
+    monto_mora_acumulada?: number
+    moneda: string
+    cotizacion: number
+    clientes: { nombre: string }
+  }
+
 
 export interface UltimoPago {
   id: string

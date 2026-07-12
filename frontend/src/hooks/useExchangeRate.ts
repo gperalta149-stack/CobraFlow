@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../services/supabaseClient'
+import { exchangeRateApi } from '../services/exchangeRateApi'
 
 interface ExchangeRate {
   compra: number
   venta: number
   fecha: string
   fuente: string
-  es_hoy: boolean
+  es_hoy?: boolean
 }
 
 export const useExchangeRate = () => {
@@ -15,26 +15,51 @@ export const useExchangeRate = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchStoredRate = async () => {
+    let cancelado = false
+
+    const fetchRate = async () => {
+      setLoading(true)
       try {
-        setLoading(true)
-        const { data, error: rpcError } = await supabase.rpc('obtener_cotizacion_vigente')
-        
-        if (rpcError) throw rpcError
-        
-        setRate(data?.[0] ?? null)
-        setError(null)
-      } catch (err) {
-        console.error('Error fetching stored exchange rate:', err)
-        setError('No se pudo obtener la cotización del dólar')
-        // Fallback a valor por defecto
-        setRate({ compra: 0, venta: 1200, fecha: new Date().toISOString(), fuente: 'fallback', es_hoy: false })
+        // 1) Cotización guardada en BD (vía backend, actualizada por el cron)
+        try {
+          const { data } = await exchangeRateApi.getStoredRate()
+          if (data && typeof data.venta === 'number') {
+            if (!cancelado) {
+              setRate(data)
+              setError(null)
+            }
+            return
+          }
+        } catch (err) {
+          console.error('Error obteniendo cotización guardada:', err)
+        }
+
+        // 2) Fallback: cotización oficial en vivo (también vía backend, nunca Supabase directo)
+        try {
+          const { data } = await exchangeRateApi.getCurrentRate()
+          if (data && typeof data.venta === 'number') {
+            if (!cancelado) {
+              setRate({ ...data, es_hoy: true })
+              setError(null)
+            }
+            return
+          }
+          throw new Error('Respuesta sin cotización')
+        } catch (err) {
+          console.error('Error obteniendo cotización en vivo:', err)
+          if (!cancelado) {
+            // Sin cotización real disponible: no inventamos un valor.
+            setRate(null)
+            setError('No se pudo obtener la cotización del dólar')
+          }
+        }
       } finally {
-        setLoading(false)
+        if (!cancelado) setLoading(false)
       }
     }
 
-    fetchStoredRate()
+    fetchRate()
+    return () => { cancelado = true }
   }, [])
 
   return { rate, loading, error }
