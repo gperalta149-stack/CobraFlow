@@ -12,11 +12,16 @@ interface DeudaMetricCardProps {
   valueColor?: string
   emptyLabel?: string
   emptyIcon?: string
+  mostrarEquivalencias?: boolean
 }
 
 export function DeudaMetricCard({
   label, ars, usd, subtitle, icon,
-  iconColor = '#60a5fa', valueColor, emptyLabel, emptyIcon,
+  iconColor = '#60a5fa', 
+  valueColor, 
+  emptyLabel, 
+  emptyIcon,
+  mostrarEquivalencias,
 }: DeudaMetricCardProps) {
   return (
     <DualMetricCard
@@ -30,7 +35,7 @@ export function DeudaMetricCard({
       emptyLabel={emptyLabel}
       emptyIcon={emptyIcon}
       seccion="deudas"
-      // ← ELIMINADO: mostrarEquivalencias={false}
+      mostrarEquivalencias={mostrarEquivalencias}
     />
   )
 }

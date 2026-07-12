@@ -19,7 +19,7 @@ export default function Dashboard() {
   } = useDashboard()
 
   const maxSaldo = topClientes.length > 0
-    ? Math.max(...topClientes.map(c => c.saldo_pendiente_usd))
+    ? Math.max(...topClientes.map(c => c.saldo_pendiente_usd + (c.mora_acumulada_usd ?? 0)))
     : 0
 
   if (loading) {

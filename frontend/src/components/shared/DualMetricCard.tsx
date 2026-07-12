@@ -2,7 +2,6 @@
 import type { ReactNode } from 'react'
 import { IconTrendingUp, IconTrendingDown } from '@tabler/icons-react'
 import { useMonedaConfig } from '../../hooks/useMonedaConfig'
-import { Equivalencia } from './Equivalencia'
 
 interface DualMetricCardProps {
   label: string
@@ -52,8 +51,9 @@ export function DualMetricCard({
   const arsFormatted = formatearMonto(ars, usd, 'ARS', seccion)
   const usdFormatted = formatearMonto(ars, usd, 'USD', seccion)
 
-  const mostrarEquivArs = equivalenciasActivas && arsFormatted.secundario && hasUsd
-  const mostrarEquivUsd = equivalenciasActivas && usdFormatted.secundario && hasArs
+  // ✅ CORREGIDO: Mostrar equivalencia si existe, sin depender de la otra moneda
+  const mostrarEquivArs = equivalenciasActivas && !!arsFormatted.secundario
+  const mostrarEquivUsd = equivalenciasActivas && !!usdFormatted.secundario
 
   return (
     <div style={{
@@ -124,7 +124,7 @@ export function DualMetricCard({
                   {prefix}{fmtARS(ars)}
                 </span>
               </div>
-              <Equivalencia visible={mostrarEquivArs}>
+              {mostrarEquivArs && (
                 <p style={{
                   fontSize: 11,
                   color: '#6b7280',
@@ -133,7 +133,7 @@ export function DualMetricCard({
                 }}>
                   {arsFormatted.secundario}
                 </p>
-              </Equivalencia>
+              )}
             </div>
           )}
           {hasUsd && (
@@ -155,7 +155,7 @@ export function DualMetricCard({
                   {prefix}{fmtUSD(usd)}
                 </span>
               </div>
-              <Equivalencia visible={mostrarEquivUsd}>
+              {mostrarEquivUsd && (
                 <p style={{
                   fontSize: 11,
                   color: '#6b7280',
@@ -164,7 +164,7 @@ export function DualMetricCard({
                 }}>
                   {usdFormatted.secundario}
                 </p>
-              </Equivalencia>
+              )}
             </div>
           )}
         </div>

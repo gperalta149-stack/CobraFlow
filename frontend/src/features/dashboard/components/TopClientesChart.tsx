@@ -47,10 +47,16 @@ export function TopClientesChart({ clientes, maxSaldo }: TopClientesChartProps) 
       <div>
         <ul style={{ listStyle: 'none', margin: 0, padding: '8px 20px' }}>
           {clientesMostrar.map((c, index) => {
-            const pct = maxSaldo > 0 ? (c.saldo_pendiente_usd / maxSaldo) * 100 : 0
+            const totalUsd = c.saldo_pendiente_usd + (c.mora_acumulada_usd ?? 0)
+            const pct = maxSaldo > 0 ? (totalUsd / maxSaldo) * 100 : 0
             const color = BAR_COLORS[index % BAR_COLORS.length]
             const moneda = c.moneda as 'ARS' | 'USD'
-            const { principal, secundario } = formatearMonto(c.saldo_pendiente, c.saldo_pendiente_usd, moneda, 'dashboard')
+            const { principal, secundario } = formatearMonto(
+              c.saldo_pendiente + (c.mora_acumulada ?? 0),
+              totalUsd,
+              moneda,
+              'dashboard'
+            )
 
             const tieneVencidas = c.max_dias_vencido > 0
             let badgeTexto: string
