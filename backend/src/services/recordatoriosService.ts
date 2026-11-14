@@ -65,11 +65,21 @@ const escapeHtml = (texto: string): string =>
 const formatearMonto = (monto: number, moneda: Moneda): string =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: moneda }).format(monto)
 
-const crearTransporte = (): Transporter => {
+interface MensajeEmail {
+  from: string
+  to: string
+  subject: string
+  html: string
+}
+
+type Enviador = (mensaje: MensajeEmail) => Promise<void>
+
+// Envío por SMTP (Gmail). Sirve en tu PC, pero Render gratis bloquea los puertos SMTP.
+const crearTransporteSmtp = (): Transporter => {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
   if (!user || !pass) {
-    throw new Error('Faltan las variables SMTP_USER y SMTP_PASS')
+    throw new Error('Falta configurar el email: definí RESEND_API_KEY, o SMTP_USER y SMTP_PASS')
   }
   const port = Number(process.env.SMTP_PORT) || 465
   return nodemailer.createTransport({
@@ -78,6 +88,40 @@ const crearTransporte = (): Transporter => {
     secure: port === 465,
     auth: { user, pass },
   })
+}
+
+// Si existe RESEND_API_KEY se envía por la API HTTPS de Resend (funciona en Render gratis).
+// Si no, se usa SMTP.
+const crearEnviador = (): Enviador => {
+  const resendKey = process.env.RESEND_API_KEY
+
+  if (resendKey) {
+    return async (mensaje: MensajeEmail): Promise<void> => {
+      const respuesta = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: mensaje.from,
+          to: [mensaje.to],
+          subject: mensaje.subject,
+          html: mensaje.html,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      })
+      if (!respuesta.ok) {
+        const detalle = await respuesta.text()
+        throw new Error(`Resend respondió ${respuesta.status}: ${detalle}`)
+      }
+    }
+  }
+
+  const transporte = crearTransporteSmtp()
+  return async (mensaje: MensajeEmail): Promise<void> => {
+    await transporte.sendMail(mensaje)
+  }
 }
 
 const armarMensaje = (
@@ -153,8 +197,11 @@ export const ejecutarRecordatorios = async (): Promise<ResultadoRecordatorios> =
   }
 
   // 2) Avisos por email
-  const transporte = crearTransporte()
+  const enviar = crearEnviador()
   const remitente = process.env.MAIL_FROM || process.env.SMTP_USER
+  if (!remitente) {
+    throw new Error('Falta la variable MAIL_FROM')
+  }
   // Modo demo: si está definida, TODOS los mails van a esta casilla y no a los clientes.
   const destinoDemo = process.env.RECORDATORIOS_DESTINO_OVERRIDE?.trim()
   const hoy = hoyArgentina()
@@ -207,7 +254,7 @@ export const ejecutarRecordatorios = async (): Promise<ResultadoRecordatorios> =
     const { asunto, html } = armarMensaje(deuda, tipo, dias)
 
     try {
-      await transporte.sendMail({ from: remitente, to: destinatario, subject: asunto, html })
+      await enviar({ from: remitente, to: destinatario, subject: asunto, html })
       resultado.avisosEnviados++
     } catch (error: unknown) {
       // Liberar la reserva para que se reintente en la próxima corrida
