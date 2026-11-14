@@ -6,6 +6,7 @@ import clientesRoutes from './routes/clientesRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
 import deudasRoutes from './routes/deudasRoutes'
 import exchangeRateRoutes from './routes/exchangeRateRoutes'
+import jobsRoutes from './routes/jobsRoutes'
 import pagosRoutes from './routes/pagosRoutes'
 import { startExchangeRateJob } from './jobs/updateExchangeRate'
 
@@ -15,8 +16,12 @@ const app = express()
 const PORT = process.env.PORT || 3000
 
 // Middlewares
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: false
 }))
 app.use(express.json())
@@ -28,9 +33,14 @@ app.use('/api/deudas', deudasRoutes)
 app.use('/api/pagos', pagosRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/exchange-rate', exchangeRateRoutes)
+app.use('/api/jobs', jobsRoutes)
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'CobraFlow API funcionando' })
+})
+
+app.get('/health', (req, res) => {
+  res.json({ ok: true })
 })
 
 // 404 — ruta no encontrada
