@@ -20,7 +20,7 @@
 
 ## 🚀 Demo
 
-- **Frontend:** [https://TU-APP.vercel.app](https://TU-APP.vercel.app)
+- **Frontend:** [https://TU-APP.vercel.app](https://cobraflow-livid.vercel.app)
 - **Backend API:** [https://cobraflow-api.onrender.com](https://cobraflow-api.onrender.com) (`/health` para health check)
 
 > El backend corre en un plan gratuito: se apaga tras 15 minutos sin uso, así que la primera petición puede tardar cerca de un minuto. También podés ejecutar el proyecto localmente siguiendo los pasos de [Instalación](#-instalación).
@@ -742,7 +742,7 @@ MIT. Ver el archivo [LICENSE](LICENSE).
 
 ## 👤 Autor
 
-**Guillermo Peralta** — [GitHub](https://github.com/gperalta149-stack) · [LinkedIn](https://www.linkedin.com/in/TU-PERFIL) · [Email](mailto:TU-EMAIL)
+**Guillermo Peralta** — [GitHub](https://github.com/gperalta149-stack) · [LinkedIn](https://www.linkedin.com/in/guillermo-peralta-a72692283) · [Email](mailto:guilleariel3@gmail.com)
 
 Proyecto desarrollado como Trabajo Final Integrador de la TUIDAI (IUA), con foco en arquitectura full-stack, automatización de procesos y un caso de uso real del contexto argentino: cobranzas en pesos y dólares.
 
