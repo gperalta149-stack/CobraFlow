@@ -290,7 +290,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               gap: 10,
             }}>
               <img
-                src="/branding/Cobraflow-Cobra.png"
+                src="/branding/Cobraflow-cobra.png"
                 alt="CobraFlow"
                 style={{
                   width: 48,
