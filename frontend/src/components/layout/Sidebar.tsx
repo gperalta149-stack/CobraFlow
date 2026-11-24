@@ -274,7 +274,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className="sidebar-logo">
           {collapsed ? (
             <img
-              src="/branding/cobraflow-cobra.png"
+              src="/branding/Cobraflow-cobra.png"
               alt="CobraFlow"
               title="CobraFlow"
               style={{
@@ -290,7 +290,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               gap: 10,
             }}>
               <img
-                src="/branding/cobraflow-cobra.png"
+                src="/branding/Cobraflow-Cobra.png"
                 alt="CobraFlow"
                 style={{
                   width: 48,
