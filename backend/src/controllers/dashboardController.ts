@@ -3,6 +3,7 @@ import { Response } from 'express'
 import { supabase } from '../config/supabase'
 import { AuthRequest } from '../middleware/authMiddleware'
 import { actualizarMoraAcumulada } from './deudasController'
+import { getCotizacionActualizada } from '../services/exchangeRateService'
 
 
 const actualizarVencidas = async () => {
@@ -10,13 +11,9 @@ const actualizarVencidas = async () => {
 }
 
 const getCotizacionVigente = async (): Promise<number> => {
-  const { data } = await supabase
-    .from('tipo_cambio')
-    .select('venta')
-    .order('fecha', { ascending: false })
-    .limit(1)
-    .single()
-  return data ? Number(data.venta) : 1
+  // Si la cotización guardada no es de hoy, se actualiza en el momento
+  const cotizacion = await getCotizacionActualizada()
+  return cotizacion ? Number(cotizacion.venta) : 1
 }
 
 // ============================================
@@ -503,4 +500,4 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
     console.error('Error inesperado en getDashboard:', error)
     res.status(500).json({ error: 'Error al cargar el dashboard' })
   }
-}
+}

@@ -9,13 +9,19 @@ interface DeudaFormProps {
   error: string
   isSubmitting: boolean
   cotizacionActual: number
+  cotizacionFecha: string | null
+  cotizacionEsDeHoy: boolean
   cargandoCotizacion: boolean
   descripcionInputRef: React.RefObject<HTMLTextAreaElement | null>
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void
   onMonedaChange: (moneda: 'ARS' | 'USD') => void
+  onUsarCotizacionActual: () => void
   onSubmit: (e: React.FormEvent) => void
   onCancel: () => void
 }
+
+// "2026-11-14" → "14/11/2026"
+const formatearFecha = (iso: string): string => iso.slice(0, 10).split('-').reverse().join('/')
 
 function Field({ label, required, hint, children }: {
   label: string
@@ -37,13 +43,13 @@ function Field({ label, required, hint, children }: {
 
 export function DeudaForm({
   form, clientes, error, isSubmitting,
-  cotizacionActual, cargandoCotizacion,
-  descripcionInputRef, onChange, onMonedaChange, onSubmit, onCancel,
+  cotizacionActual, cotizacionFecha, cotizacionEsDeHoy, cargandoCotizacion,
+  descripcionInputRef, onChange, onMonedaChange, onUsarCotizacionActual, onSubmit, onCancel,
 }: DeudaFormProps) {
   const esUSD = form.moneda === 'USD'
   const parsear = (val: string) => parseFloat(val.replace(',', '.')) || 0
   const montoOriginalNum = parsear(form.monto_original)
-  const cotizacionNum = parsear(form.cotizacion) || cotizacionActual || 1200
+  const cotizacionNum = parsear(form.cotizacion)
   const montoTotalCalculado = esUSD ? montoOriginalNum * cotizacionNum : montoOriginalNum
 
   return (
@@ -147,9 +153,33 @@ export function DeudaForm({
                 <span className="text-xs text-emerald-400 animate-pulse">cargando...</span>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-1 ml-12">
-              Cotización de referencia: ${cotizacionActual.toLocaleString('es-AR')} ARS
-            </p>
+            <div className="mt-1 ml-12 space-y-1">
+              {cotizacionActual > 0 && (
+                <p className="text-xs text-gray-500">
+                  Cotización actual: ${cotizacionActual.toLocaleString('es-AR')} ARS
+                  {cotizacionFecha && (cotizacionEsDeHoy
+                    ? ' · actualizada hoy'
+                    : ` · del ${formatearFecha(cotizacionFecha)}`)}
+                </p>
+              )}
+              {!cargandoCotizacion && cotizacionActual === 0 && (
+                <p className="text-xs text-red-400">
+                  No se pudo obtener la cotización del dólar. Ingresala manualmente.
+                </p>
+              )}
+              {cotizacionActual > 0 && !cotizacionEsDeHoy && (
+                <p className="text-xs text-amber-400">
+                  ⚠️ Esta cotización no es de hoy. Verificala o ingresá la que corresponda.
+                </p>
+              )}
+              {cotizacionActual > 0 && cotizacionNum !== cotizacionActual && (
+                <button type="button" onClick={onUsarCotizacionActual}
+                  disabled={isSubmitting}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 underline">
+                  Usar cotización actual (${cotizacionActual.toLocaleString('es-AR')})
+                </button>
+              )}
+            </div>
           </Field>
           {montoOriginalNum > 0 && (
             <div className="border-t border-emerald-500/20 pt-3 flex justify-between items-center text-sm">
@@ -213,4 +243,4 @@ export function DeudaForm({
       </div>
     </form>
   )
-}
+}

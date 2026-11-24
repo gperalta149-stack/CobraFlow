@@ -1,60 +1,28 @@
 import { supabase } from '../config/supabase'
 
-// Obtener cotización oficial desde API externa
-export const fetchOfficialExchangeRate = async () => {
-  try {
-    const response = await fetch('https://dolarapi.com/v1/dolares/oficial')
-    const data = await response.json()
-    
-    console.log('📊 Datos de API oficial:', data)
-    
-    // La API devuelve: { compra: 1400, venta: 1450 }
-    // Devolvemos tal cual
-    return {
-      compra: Number(data.compra),
-      venta: Number(data.venta),
-      fecha: new Date().toISOString(),
-      fuente: 'oficial'
-    }
-  } catch (error) {
-    console.error('Error fetching official rate:', error)
-    // Fallback con valores correctos
-    return {
-      compra: 1400,
-      venta: 1450,
-      fecha: new Date().toISOString(),
-      fuente: 'oficial_fallback'
-    }
+// Consulta DolarAPI. Si la API falla o devuelve algo inválido, lanza un error:
+// nunca se inventa una cotización (antes se devolvía un 1400/1450 fijo que luego se guardaba como real).
+const consultarDolarApi = async (tipo: 'oficial' | 'blue') => {
+  const response = await fetch(`https://dolarapi.com/v1/dolares/${tipo}`)
+  if (!response.ok) {
+    throw new Error(`DolarAPI (${tipo}) respondió ${response.status}`)
   }
+
+  const data = await response.json()
+  const compra = Number(data.compra)
+  const venta = Number(data.venta)
+  if (!(compra > 0) || !(venta > 0)) {
+    throw new Error(`DolarAPI (${tipo}) devolvió una cotización inválida`)
+  }
+
+  return { compra, venta, fecha: new Date().toISOString(), fuente: tipo }
 }
 
+// Obtener cotización oficial desde API externa
+export const fetchOfficialExchangeRate = async () => consultarDolarApi('oficial')
+
 // Obtener cotización blue desde API externa
-export const fetchBlueExchangeRate = async () => {
-  try {
-    const response = await fetch('https://dolarapi.com/v1/dolares/blue')
-    const data = await response.json()
-    
-    console.log('📊 Datos de API blue:', data)
-    
-    // La API devuelve: { compra: 1400, venta: 1450 }
-    // Devolvemos tal cual
-    return {
-      compra: Number(data.compra),
-      venta: Number(data.venta),
-      fecha: new Date().toISOString(),
-      fuente: 'blue'
-    }
-  } catch (error) {
-    console.error('Error fetching blue rate:', error)
-    // Fallback con valores correctos
-    return {
-      compra: 1400,
-      venta: 1450,
-      fecha: new Date().toISOString(),
-      fuente: 'blue_fallback'
-    }
-  }
-}
+export const fetchBlueExchangeRate = async () => consultarDolarApi('blue')
 
 // ============================================
 // GUARDAR COTIZACIÓN (USANDO RPC CON UPSERT)
@@ -144,5 +112,40 @@ export const updateBlueExchangeRate = async () => {
   } catch (error) {
     console.error('❌ Error updating blue exchange rate:', error)
     throw error
+  }
+}
+
+// ============================================
+// COTIZACIÓN SIEMPRE AL DÍA
+// ============================================
+export interface CotizacionGuardada {
+  fecha: string
+  compra: number
+  venta: number
+  fuente: string
+  es_hoy: boolean
+}
+
+const ESPERA_ENTRE_INTENTOS_MS = 10 * 60 * 1000
+let ultimoIntentoFallido = 0
+
+// Devuelve la cotización guardada. Si no es de hoy, intenta actualizarla desde la API
+// en el momento (no depende de que el cron haya corrido). Si la API falla, devuelve la
+// última guardada marcada con es_hoy = false, para que la pantalla pueda avisar.
+export const getCotizacionActualizada = async (): Promise<CotizacionGuardada | null> => {
+  const guardada = (await getCurrentExchangeRate()) as CotizacionGuardada | null
+  if (guardada?.es_hoy) return guardada
+
+  // Si la API falló hace poco, no insistimos en cada request
+  if (Date.now() - ultimoIntentoFallido < ESPERA_ENTRE_INTENTOS_MS) return guardada
+
+  try {
+    await updateDailyExchangeRate()
+    const nueva = (await getCurrentExchangeRate()) as CotizacionGuardada | null
+    return nueva ?? guardada
+  } catch (error) {
+    ultimoIntentoFallido = Date.now()
+    console.error('No se pudo refrescar la cotización, se usa la última guardada:', error)
+    return guardada
   }
 }

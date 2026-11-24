@@ -4,7 +4,7 @@ import {
   fetchOfficialExchangeRate, 
   fetchBlueExchangeRate, 
   saveExchangeRate,
-  getCurrentExchangeRate,
+  getCotizacionActualizada,
   updateDailyExchangeRate 
 } from '../services/exchangeRateService'
 
@@ -30,7 +30,7 @@ export const getCurrentRate = async (req: AuthRequest, res: Response) => {
 // Obtener cotización guardada en la base de datos
 export const getStoredRate = async (req: AuthRequest, res: Response) => {
   try {
-    const rate = await getCurrentExchangeRate()
+    const rate = await getCotizacionActualizada()
     res.json(rate || { message: 'No hay cotización registrada' })
   } catch (error) {
     console.error('Error en getStoredRate:', error)
@@ -69,4 +69,4 @@ export const forceUpdateRate = async (req: AuthRequest, res: Response) => {
     console.error('Error en forceUpdateRate:', error)
     res.status(500).json({ error: 'Error al forzar actualización' })
   }
-}
+}

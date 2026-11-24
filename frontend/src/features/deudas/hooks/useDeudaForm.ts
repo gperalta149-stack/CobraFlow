@@ -20,6 +20,9 @@ const initialForm: DeudaFormData = {
   observaciones: ''
 }
 
+// Acepta "1468,50" y "1468.50"
+const aNumero = (valor: string): number => parseFloat(valor.replace(',', '.')) || 0
+
 export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<DeudaFormData>(initialForm)
@@ -27,50 +30,55 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const descripcionInputRef = useRef<HTMLTextAreaElement>(null)
 
-  // Cotización única del sistema (guardada en BD, actualizada por el cron del backend)
-  const { rate, loading: cargandoCotizacion } = useExchangeRate()
-  const cotizacionActual = rate?.venta || 1200
+  // true cuando el usuario escribió la cotización a mano: no se la pisa con la automática
+  const cotizacionManual = useRef(false)
 
-  // Prefill de cotización cuando llega el valor, si el usuario no la tocó todavía
+  // Cotización del sistema. Si no es de hoy, el backend la actualiza al momento de pedirla.
+  const { rate, loading: cargandoCotizacion } = useExchangeRate()
+  // Sin cotización disponible no se inventa un valor: queda en 0 y el usuario la completa
+  const cotizacionActual = rate?.venta ?? 0
+  const cotizacionFecha = rate?.fecha ?? null
+  const cotizacionEsDeHoy = rate?.es_hoy ?? false
+
+  const cotizacionComoTexto = () => (cotizacionActual > 0 ? cotizacionActual.toString() : '')
+
+  // Prefill con la cotización actual cuando llega, salvo que el usuario ya la haya escrito
   useEffect(() => {
-    if (!cargandoCotizacion && form.moneda === 'USD' && !form.cotizacion) {
-      setForm(prev => ({ ...prev, cotizacion: cotizacionActual.toString() }))
-    }
-  }, [cargandoCotizacion, cotizacionActual])
+    if (form.moneda !== 'USD' || cotizacionManual.current) return
+    setForm(prev => ({ ...prev, cotizacion: cotizacionActual > 0 ? cotizacionActual.toString() : '' }))
+  }, [form.moneda, cotizacionActual])
 
   // Actualizar monto_total automáticamente
   useEffect(() => {
     if (form.moneda === 'USD') {
-      const montoOriginal = parseFloat(form.monto_original) || 0
-      const cotizacion = parseFloat(form.cotizacion) || cotizacionActual
-      const nuevoTotal = (montoOriginal * cotizacion).toFixed(2)
+      const nuevoTotal = (aNumero(form.monto_original) * aNumero(form.cotizacion)).toFixed(2)
       setForm(prev => ({ ...prev, monto_total: nuevoTotal }))
     } else {
       setForm(prev => ({ ...prev, monto_total: form.monto_original || '0' }))
     }
-  }, [form.monto_original, form.cotizacion, form.moneda, cotizacionActual])
+  }, [form.monto_original, form.cotizacion, form.moneda])
 
-  // Actualizar cotización según la moneda
-  useEffect(() => {
-    setForm(prev => ({
-      ...prev,
-      cotizacion: form.moneda === 'USD' ? (cotizacionActual || 1200).toString() : '1'
-    }))
-  }, [form.moneda, cotizacionActual])
-
-  // Función dedicada para cambio de moneda
+  // Cambio de moneda: en USD arranca con la cotización actual
   const handleMonedaChange = (moneda: 'ARS' | 'USD') => {
+    cotizacionManual.current = false
     setForm(prev => ({
       ...prev,
       moneda,
-      cotizacion: moneda === 'USD' ? (cotizacionActual || 1200).toString() : '1',
+      cotizacion: moneda === 'USD' ? cotizacionComoTexto() : '1',
       monto_original: '',
       monto_total: ''
     }))
   }
 
+  // Botón "Usar cotización actual": descarta el valor escrito a mano
+  const usarCotizacionActual = () => {
+    cotizacionManual.current = false
+    setForm(prev => ({ ...prev, cotizacion: cotizacionComoTexto() }))
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
+    if (name === 'cotizacion') cotizacionManual.current = true
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
@@ -92,9 +100,16 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
         return
       }
 
-      const montoOriginal = parseFloat(form.monto_original)
-      if (isNaN(montoOriginal) || montoOriginal <= 0) {
+      const montoOriginal = aNumero(form.monto_original)
+      if (montoOriginal <= 0) {
         setError('El monto debe ser mayor a cero')
+        setIsSubmitting(false)
+        return
+      }
+
+      const cotizacion = aNumero(form.cotizacion)
+      if (form.moneda === 'USD' && cotizacion <= 0) {
+        setError('Ingresá la cotización del dólar')
         setIsSubmitting(false)
         return
       }
@@ -112,13 +127,14 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
         monto_total: form.monto_total,
         fecha_vencimiento: form.fecha_vencimiento,
         moneda: form.moneda,
-        monto_original: form.monto_original,
-        cotizacion: form.moneda === 'USD' ? (form.cotizacion || cotizacionActual.toString()) : '1',
+        monto_original: montoOriginal.toString(),
+        cotizacion: form.moneda === 'USD' ? cotizacion.toString() : '1',
         observaciones: form.observaciones || ''
       }
 
       await deudasApi.create(dataToSend)
 
+      cotizacionManual.current = false
       setForm(initialForm)
       setShowForm(false)
       onSuccess()
@@ -130,6 +146,7 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
   }
 
   const handleCancel = () => {
+    cotizacionManual.current = false
     setShowForm(false)
     setForm(initialForm)
     setError('')
@@ -148,10 +165,13 @@ export function useDeudaForm({ onSuccess }: UseDeudaFormProps) {
     error,
     isSubmitting,
     cotizacionActual,
+    cotizacionFecha,
+    cotizacionEsDeHoy,
     cargandoCotizacion,
     descripcionInputRef,
     handleChange,
     handleMonedaChange,
+    usarCotizacionActual,
     handleSubmit,
     handleCancel,
     openForm

@@ -57,9 +57,9 @@ export default function Deudas() {
 
   const {
     showForm, form, error: formError,
-    isSubmitting, cotizacionActual: cotizForm, cargandoCotizacion,
+    isSubmitting, cotizacionActual: cotizForm, cotizacionFecha, cotizacionEsDeHoy, cargandoCotizacion,
     descripcionInputRef,
-    handleChange, handleMonedaChange,
+    handleChange, handleMonedaChange, usarCotizacionActual,
     handleSubmit, handleCancel, openForm,
   } = useDeudaForm({ onSuccess: refetchDeudas })
 
@@ -263,12 +263,14 @@ export default function Deudas() {
         <DeudaForm
           form={form} clientes={clientes} error={formError}
           isSubmitting={isSubmitting} cotizacionActual={cotizForm}
+          cotizacionFecha={cotizacionFecha} cotizacionEsDeHoy={cotizacionEsDeHoy}
           cargandoCotizacion={cargandoCotizacion}
           descripcionInputRef={descripcionInputRef}
           onChange={handleChange} onMonedaChange={handleMonedaChange}
+          onUsarCotizacionActual={usarCotizacionActual}
           onSubmit={handleSubmit} onCancel={handleCancel}
         />
       </SlidePanel>
     </div>
   )
-}
+}
