@@ -15,11 +15,21 @@ export function PublicNavbar() {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 7,
-          background: '#1D9E75',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28,
+          height: 28,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>C</span>
+          <img
+            src="/cobraflow-cobra.svg"
+            alt="CobraFlow"
+            style={{
+              width: 28,
+              height: 28,
+              objectFit: 'contain',
+            }}
+          />
         </div>
         <span style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>
           CobraFlow
