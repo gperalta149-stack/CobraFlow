@@ -22,7 +22,7 @@ export function PublicNavbar() {
           justifyContent: 'center',
         }}>
           <img
-            src="/cobraflow-cobra.svg"
+            src="branding/cobraflow-cobra.png"
             alt="CobraFlow"
             style={{
               width: 28,
